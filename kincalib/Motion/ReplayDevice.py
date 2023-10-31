@@ -4,8 +4,23 @@ import time
 import crtk
 from kincalib.utils.Logger import Logger
 import rospy
+import dvrk
 
 log = Logger(__name__).log
+
+
+def create_psm_handle(name, expected_interval=0.1):
+    ral = crtk.ral(name + "_crtk")
+    return dvrk.arm(ral=ral, arm_name=name, expected_interval=expected_interval)
+
+
+def home_device(arm):
+    print("-- Enabling arm")
+    if not arm.enable(10):
+        sys.exit("-- Failed to enable within 10 seconds")
+    print("-- Homing arm")
+    if not arm.home(10):
+        sys.exit("-- Failed to home within 10 seconds")
 
 
 class RobotHandler:

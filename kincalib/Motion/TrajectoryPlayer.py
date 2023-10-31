@@ -18,6 +18,7 @@ from kincalib.utils.Logger import Logger
 from kincalib.Motion.RosbagUtils import RosbagUtils
 from kincalib.utils.Logger import Logger
 from kincalib.Motion.ReplayDevice import RobotHandler
+from kincalib.Motion.ReplayDevice import create_psm_handle, home_device
 
 log = Logger(__name__).log
 
@@ -77,7 +78,7 @@ class TrajectoryPlayer:
             log.info(f"-- Trajectory Progress --> {100*index/len(self.trajectory):0.02f} %")
             self.replay_device.move_jp(
                 numpy.array(new_js.position)
-            )  # .wait()  # wait until motion is finished
+            ).wait()  # wait until motion is finished
             time.sleep(0.005)
 
             # After motion callbacks
@@ -127,14 +128,12 @@ class Trajectory:
         log.info("Trajectory report:")
         # report out of order setpoints
         if self.out_of_order_counter > 0:
-            self.log.info(
-                "-- Found and removed %i out of order setpoints" % (self.out_of_order_counter)
-            )
+            log.info("-- Found and removed %i out of order setpoints" % (self.out_of_order_counter))
 
         # convert to mm
         bbmin = self.bbmin * 1000.0
         bbmax = self.bbmax * 1000.0
-        self.log.info(
+        log.info(
             "-- Range of motion in mm:\n   X:[%f, %f]\n   Y:[%f, %f]\n   Z:[%f, %f]"
             % (bbmin[0], bbmax[0], bbmin[1], bbmax[1], bbmin[2], bbmax[2])
         )
@@ -143,14 +142,12 @@ class Trajectory:
         duration = (
             self.setpoints[-1].header.stamp.to_sec() - self.setpoints[0].header.stamp.to_sec()
         )
-        self.log.info("-- Duration of trajectory: %f seconds" % (duration))
+        log.info("-- Duration of trajectory: %f seconds" % (duration))
 
         # Number of poses
-        self.log.info(
-            "-- Found %i setpoints using topic %s" % (len(self.setpoints), self.setpoint_js_t)
-        )
+        log.info("-- Found %i setpoints using topic %s" % (len(self.setpoints), self.setpoint_js_t))
         if len(self.setpoints) == 0:
-            self.log.error("-- No trajectory found!")
+            log.error("-- No trajectory found!")
 
     def __iter__(self):
         self.iteration_idx = 0
@@ -307,17 +304,21 @@ class SoftRandomJointTrajectory(RandomJointTrajectory):
 if __name__ == "__main__":
     rosbag_path = Path("data/dvrk_recorded_motions/pitch_exp_traj_03_test_cropped.bag")
     rosbag_handle = RosbagUtils(rosbag_path)
-    # trajectory = Trajectory.from_ros_bag(rosbag_handle, sampling_factor=80)
+    trajectory = Trajectory.from_ros_bag(rosbag_handle, sampling_factor=80)
     # trajectory = RandomJointTrajectory.generate_trajectory(50)
-    trajectory = SoftRandomJointTrajectory.generate_trajectory(100, samples_per_step=28)
+    # trajectory = SoftRandomJointTrajectory.generate_trajectory(100, samples_per_step=28)
 
     log.info(f"Initial pt {np.array(trajectory.setpoints[0].position)}")
     log.info(f"Starting ts {trajectory.setpoints[0].header.stamp.to_sec()}")
     log.info(f"number of points {len(trajectory)}")
+    trajectory.trajectory_report()
 
     arm_namespace = "PSM2"
-    arm = RobotHandler(device_namespace=arm_namespace, expected_interval=0.01)
+    # Robot handler has some issues with new crkt versions
+    # arm = RobotHandler(device_namespace=arm_namespace, expected_interval=0.01)
     # arm.home_device()
+    arm = create_psm_handle(arm_namespace, expected_interval=0.01)
+    home_device(arm)
 
     # callback example
     # outer_js_calib_cb = OuterJointsCalibrationRecorder(
