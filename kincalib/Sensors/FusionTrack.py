@@ -12,7 +12,7 @@ from sensor_msgs.msg import JointState
 import geometry_msgs.msg
 import time
 import numpy as np
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 import scipy
 from scipy.spatial import distance
 from pathlib import Path
@@ -43,11 +43,11 @@ class FusionTrackAbstract(ABC):
             return tool_names
 
     @abstractmethod
-    def get_data(self, marker_name: str):
+    def get_data(self, marker_name: str) -> np.ndarray:
         pass
 
     @abstractmethod
-    def get_all_data(self):
+    def get_all_data(self) -> Dict[str, np.ndarray]:
         pass
 
 
@@ -72,7 +72,7 @@ class MarkerSubscriber:
         self.marker_pose = None
         return data_to_return
 
-    def has_data(self):
+    def has_data(self) -> bool:
         if self.marker_pose is not None:
             return True
         else:
@@ -92,14 +92,14 @@ class FusionTrack(FusionTrackAbstract):
             rospy.logdebug(rospy.get_caller_id() + " -> ROS already initialized")
 
         # Create subscribers
-        self.subscribers = {}
+        self.subscribers: Dict[str, MarkerSubscriber] = {}
         for name in self.marker_names:
             self.subscribers[name] = MarkerSubscriber(name)
 
-    def get_data(self, marker_name: str):
+    def get_data(self, marker_name: str) -> np.ndarray:
         return self.subscribers[marker_name].get_data()
 
-    def get_all_data(self):
+    def get_all_data(self) -> Dict[str, np.ndarray]:
         data = {}
         for name in self.marker_names:
             data[name] = self.subscribers[name].get_data()
