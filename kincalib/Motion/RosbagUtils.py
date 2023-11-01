@@ -156,4 +156,6 @@ if __name__ == "__main__":
 
     jp, jv = RosbagUtils.extract_joint_state_data(msg_dict[topics[0]])
     linear_vel = RosbagUtils.extract_twist_data(msg_dict[topics[2]])
+
+    print(f"initial jp: {jp[0]}")
     plot_cv(linear_vel)

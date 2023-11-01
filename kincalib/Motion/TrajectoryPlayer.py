@@ -79,7 +79,7 @@ class TrajectoryPlayer:
             self.replay_device.move_jp(
                 numpy.array(new_js.position)
             ).wait()  # wait until motion is finished
-            time.sleep(0.005)
+            # time.sleep(0.005)
 
             # After motion callbacks
             if execute_cb:
@@ -229,8 +229,8 @@ class RandomJointTrajectory(Trajectory):
         # Specified in rad
         q1_range = np.array([-0.60, 0.70])
         q2_range = np.array([-0.49, 0.47])
-        q3_range = np.array([0.13, 0.22])
-        q4_range = np.array([-0.35, 1.0])
+        q3_range = np.array([0.09, 0.20])
+        q4_range = np.array([-1.0, 0.3])
         q5_range = np.array([-1.34, 1.34])
         q6_range = np.array([-1.34, 1.34])
 

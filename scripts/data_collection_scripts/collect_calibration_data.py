@@ -53,7 +53,7 @@ def report_and_confirm(config_dict) -> str:
 @click.option("--marker_name", type=str, default="custom-marker-112")
 @click.option("--traj_type", type=click.Choice(["rosbag", "random", "soft"]), default="random")
 @click.option("--traj_size", type=int, default=150)
-@click.option("--rosbag_path", type=click.Path(exists=True, path_type=Path), default=None)
+@click.option("--rosbag_path", type=click.Path(exists=True, path_type=Path), default="./data/dvrk_recorded_motions/pitch_exp_traj_01_test_cropped.bag")
 @click.option("--description", type=str, default="")
 @click.option(
     "--real/--sim",
@@ -62,8 +62,9 @@ def report_and_confirm(config_dict) -> str:
     default=False,
     help="Use real or simulated devices",
 )
+@click.option("--save_every", type=int, default=120, help="Send data to csv every n samples")
 def main(
-    marker_config, marker_name, traj_type, traj_size, rosbag_path, description, use_real_setup
+    marker_config, marker_name, traj_type, traj_size, rosbag_path, description, use_real_setup, save_every
 ):
     # Save config
     now = datetime.now()
@@ -77,9 +78,9 @@ def main(
         rosbag_path=str(rosbag_path),
         description=description,
         use_real_setup=use_real_setup,
+        save_every = save_every,
     )
     config_dict["output_path"] = str(output_path)
-    save_configurations(config_dict, output_path / "config.json")
 
     # Create devices
     arm = create_psm_handle("PSM2", expected_interval=0.01)
@@ -92,7 +93,8 @@ def main(
     # Load trajectory
     if traj_type == "rosbag":
         rosbag_handle = RosbagUtils(rosbag_path)
-        trajectory = Trajectory.from_ros_bag(rosbag_handle, sampling_factor=1)
+        trajectory = Trajectory.from_ros_bag(rosbag_handle, sampling_factor=10)
+        config_dict['traj_size'] = len(trajectory)
     elif traj_type == "random":
         trajectory = RandomJointTrajectory.generate_trajectory(traj_size)
     elif traj_type == "soft":
@@ -100,7 +102,7 @@ def main(
 
     # Create trajectory player and recorders
     csv_saver = RecordCollectionCsvSaver(output_path)
-    data_recorder = DataRecorder(marker_name, arm, fusion_track, data_saver=csv_saver, save_every=60)
+    data_recorder = DataRecorder(marker_name, arm, fusion_track, data_saver=csv_saver, save_every=save_every)
 
     trajectory_player = TrajectoryPlayer(
         replay_device=arm,
@@ -110,6 +112,7 @@ def main(
     )
 
     ans = report_and_confirm(config_dict)
+    save_configurations(config_dict, output_path / "config.json")
     if ans == "y":
         try:
             trajectory_player.replay_trajectory(execute_cb=True)
