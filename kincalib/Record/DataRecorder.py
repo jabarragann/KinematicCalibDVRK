@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Callable, Dict
 from tf_conversions import posemath as pm
 from dvrk import psm
+from kincalib.utils.Logger import Logger
 from kincalib.Sensors.FusionTrack import FusionTrackAbstract
 from kincalib.Record.Record import (
     CartesianRecord,
@@ -10,6 +11,8 @@ from kincalib.Record.Record import (
     RecordCollection,
     RecordCollectionCsvSaver,
 )
+
+log = Logger(__file__).log
 
 
 @dataclass
@@ -64,4 +67,5 @@ class DataRecorder:
             self.rec_collection.get_record(rec_name).add_data(index, action())
 
         if self.index % self.save_every == 0:
+            log.info(f"Dumping data to csv file...")
             self.rec_collection.save_and_clear()
