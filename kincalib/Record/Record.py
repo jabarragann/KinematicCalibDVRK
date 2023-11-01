@@ -1,19 +1,38 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import  Dict, List
+from pathlib import Path
+from typing import Dict, List
 import numpy as np
 from kincalib.Transforms.Rotation import Rotation3D
+import pandas as pd
 
 
 @dataclass
 class RecordCollectionCsvSaver:
-    pass
+    output_path: Path
+
+    def __post_init__(self):
+        self.file_counter = 1
+
+    def save(self, records_list: List[Record]):
+        headers = ["traj_index"]
+        data = []
+        for r in records_list:
+            headers += r.headers
+            data.append(np.array(r.data_array))
+        data = np.concatenate(data, axis=1)
+        data = np.concatenate((np.array(r.index_array).reshape(-1, 1), data), axis=1)
+
+        df = pd.DataFrame(data, columns=headers)
+        df.to_csv(self.output_path / f"record_{self.file_counter:03d}.csv", index=False)
+        self.file_counter += 1
 
 
 @dataclass
 class RecordCollection:
     records_list: List[Record]
+    data_saver: RecordCollectionCsvSaver
 
     def __post_init__(self):
         assert self.are_all_records_names_unique(), "Record names must be unique"
@@ -37,6 +56,18 @@ class RecordCollection:
             all_headers += rec.headers
 
         return self.are_elements_unique(all_headers)
+
+    def save_and_clear(self):
+        self.save_data()
+        self.clear_data()
+
+    def save_data(self):
+        self.data_saver.save(self.records_list)
+
+    def clear_data(self):
+        for r in self.records_list:
+            r.data_array = []
+            r.index_array = []
 
     @staticmethod
     def are_elements_unique(input_list) -> bool:

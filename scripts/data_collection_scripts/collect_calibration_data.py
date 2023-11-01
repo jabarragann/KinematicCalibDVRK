@@ -1,28 +1,13 @@
-# Python imports
+import click
 from datetime import datetime
 import json
 from pathlib import Path
-import time
-import argparse
-import sys
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-from pathlib import Path
-from typing import List, Tuple, Set
-from rich.logging import RichHandler
-from rich.progress import track
 
-# ROS and DVRK imports
-import dvrk
-
-# from kincalib.Recording.DataRecorder import DataRecorder, OuterJointsCalibrationRecorder, WristJointsCalibrationRecorder
-import rospy
-from kincalib.Record.DataRecorder import DataRecorder
-from kincalib.Sensors.FusionTrack import FusionTrack, FusionTrackDummy
-
-# kincalib module imports
+# kincalib module
 from kincalib.utils.Logger import Logger
+from kincalib.Record.DataRecorder import DataRecorder
+from kincalib.Record.Record import RecordCollectionCsvSaver
+from kincalib.Sensors.FusionTrack import FusionTrack, FusionTrackDummy
 
 # from kincalib.utils.SavingUtilities import save_without_overwritting
 from kincalib.Motion.RosbagUtils import RosbagUtils
@@ -33,7 +18,6 @@ from kincalib.Motion.TrajectoryPlayer import (
     Trajectory,
     RandomJointTrajectory,
 )
-import click
 
 log = Logger("collection").log
 
@@ -68,7 +52,7 @@ def report_and_confirm(config_dict) -> str:
 )
 @click.option("--marker_name", type=str, default="custom-marker-112")
 @click.option("--traj_type", type=click.Choice(["rosbag", "random", "soft"]), default="random")
-@click.option("--traj_size", type=int, default=100)
+@click.option("--traj_size", type=int, default=150)
 @click.option("--rosbag_path", type=click.Path(exists=True, path_type=Path), default=None)
 @click.option("--description", type=str, default="")
 @click.option(
@@ -115,8 +99,8 @@ def main(
         trajectory = SoftRandomJointTrajectory.generate_trajectory(traj_size)
 
     # Create trajectory player and recorders
-
-    data_recorder = DataRecorder(marker_name, arm, fusion_track, None)
+    csv_saver = RecordCollectionCsvSaver(output_path)
+    data_recorder = DataRecorder(marker_name, arm, fusion_track, data_saver=csv_saver, save_every=60)
 
     trajectory_player = TrajectoryPlayer(
         replay_device=arm,
@@ -127,7 +111,10 @@ def main(
 
     ans = report_and_confirm(config_dict)
     if ans == "y":
-        trajectory_player.replay_trajectory(execute_cb=True)
+        try:
+            trajectory_player.replay_trajectory(execute_cb=True)
+        finally:
+            data_recorder.rec_collection.save_data()
 
 
 if __name__ == "__main__":

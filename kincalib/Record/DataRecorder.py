@@ -18,6 +18,7 @@ class DataRecorder:
     robot_handle: psm
     ftk_handle: FusionTrackAbstract
     data_saver: RecordCollectionCsvSaver
+    save_every: int = 60
 
     def __post_init__(self):
         self.index = None
@@ -46,7 +47,7 @@ class DataRecorder:
             self.setpoint_jp,
             self.setpoint_cp,
         ]
-        self.rec_collection = RecordCollection(self.record_list)
+        self.rec_collection = RecordCollection(self.record_list, data_saver=self.data_saver)
 
     def get_ftk_data(self):
         return self.ftk_handle.get_data(self.marker_name)
@@ -62,6 +63,5 @@ class DataRecorder:
         for rec_name, action in self.func_dict.items():
             self.rec_collection.get_record(rec_name).add_data(index, action())
 
-        if self.index % 50 == 0:
-            self.data_saver.save_data()
-            self.rec_collection.clear_data()
+        if self.index % self.save_every == 0:
+            self.rec_collection.save_and_clear()
