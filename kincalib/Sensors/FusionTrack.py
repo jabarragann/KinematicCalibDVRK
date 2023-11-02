@@ -97,9 +97,13 @@ class FusionTrack(FusionTrackAbstract):
             self.subscribers[name] = MarkerSubscriber(name)
 
     def get_data(self, marker_name: str) -> np.ndarray:
+        """ Warning: None data can be generated if no measurement was found
+        """
         return self.subscribers[marker_name].get_data()
 
     def get_all_data(self) -> Dict[str, np.ndarray]:
+        """ Warning: None data can be generated if no measurement was found
+        """
         data = {}
         for name in self.marker_names:
             data[name] = self.subscribers[name].get_data()

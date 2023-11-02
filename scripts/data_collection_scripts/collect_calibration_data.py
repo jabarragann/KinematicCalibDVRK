@@ -51,18 +51,18 @@ def report_and_confirm(config_dict) -> str:
     help="Marker config file",
 )
 @click.option("--marker_name", type=str, default="dvrk_tip_frame")
-@click.option("--traj_type", type=click.Choice(["rosbag", "random", "soft"]), default="random")
-@click.option("--traj_size", type=int, default=150)
+@click.option("--traj_type", type=click.Choice(["rosbag", "random", "soft"]), default="soft")
+@click.option("--traj_size", type=int, default=50)
 @click.option("--rosbag_path", type=click.Path(exists=True, path_type=Path), default="./data/dvrk_recorded_motions/pitch_exp_traj_01_test_cropped.bag")
 @click.option("--description", type=str, default="")
 @click.option(
     "--real/--sim",
     "use_real_setup",
     is_flag=True,
-    default=False,
+    default=True,
     help="Use real or simulated devices",
 )
-@click.option("--save_every", type=int, default=120, help="Send data to csv every n samples")
+@click.option("--save_every", type=int, default=20, help="Send data to csv every n samples")
 def main(
     marker_config, marker_name, traj_type, traj_size, rosbag_path, description, use_real_setup, save_every
 ):

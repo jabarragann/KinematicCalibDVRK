@@ -119,11 +119,13 @@ class CartesianRecord(Record):
 
     def add_data(self, idx: int, data: np.ndarray) -> bool:
         if data is None:
-            return False
+            pose_6d = np.empty(len(self.headers)) 
+            pose_6d[:] = np.nan
+        else:
+            rot = Rotation3D(data[:3, :3]).as_rotvec().squeeze()
+            pos = data[:3, 3].squeeze()
+            pose_6d = np.concatenate((pos, rot))
 
-        rot = Rotation3D(data[:3, :3]).as_rotvec().squeeze()
-        pos = data[:3, 3].squeeze()
-        pose_6d = np.concatenate((pos, rot))
         self.data_array.append(np.array(pose_6d))
         self.index_array.append(idx)
 

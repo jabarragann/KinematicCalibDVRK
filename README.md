@@ -33,6 +33,8 @@ echo "/home/jbarrag3/research_juan/ros_ws/dvrk_ws/devel/lib/python3/dist-package
 
 # TODO
 
+**Each record is responsible for managing None data**
+
 **Register to atracsys registration error**
 
 List of atracsys topics
