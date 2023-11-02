@@ -1,12 +1,8 @@
 {
     "tools": [
         {
-            "name": "custom-marker-112",
-            "json-file": "custom_marker_id_112.json"
-        },
-        {
-            "name": "pointer_id_117",
-            "json-file": "pointer_tool960553_id_117.json"
+            "name": "dvrk_tip_frame",
+            "json-file": "dvrk_tip_frame.json"
         }
     ]
 }
