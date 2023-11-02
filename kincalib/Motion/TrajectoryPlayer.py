@@ -79,7 +79,7 @@ class TrajectoryPlayer:
             self.replay_device.move_jp(
                 numpy.array(new_js.position)
             ).wait()  # wait until motion is finished
-            # time.sleep(0.005)
+            time.sleep(0.2) # Wait to a static measurement.
 
             # After motion callbacks
             if execute_cb:

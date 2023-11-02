@@ -50,7 +50,7 @@ def report_and_confirm(config_dict) -> str:
     default="share/markers_config.json",
     help="Marker config file",
 )
-@click.option("--marker_name", type=str, default="custom-marker-112")
+@click.option("--marker_name", type=str, default="dvrk_tip_frame")
 @click.option("--traj_type", type=click.Choice(["rosbag", "random", "soft"]), default="random")
 @click.option("--traj_size", type=int, default=150)
 @click.option("--rosbag_path", type=click.Path(exists=True, path_type=Path), default="./data/dvrk_recorded_motions/pitch_exp_traj_01_test_cropped.bag")
