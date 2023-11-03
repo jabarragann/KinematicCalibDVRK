@@ -40,7 +40,7 @@ class DvrkPsmKin(DHRobot):
     # fmt:off
     # Base transforms based on DVRK console configuration file
     tool_offset = np.array([[ 0.0, -1.0,  0.0,  0.0  ],
-                            [ 0.0,  0.0,  1.0,  0.019],
+                            [ 0.0,  0.0,  1.0,  0.0  ],
                             [-1.0,  0.0,  0.0,  0.0  ],
                             [ 0.0,  0.0,  0.0,  1.0  ]])
     # base_transform = np.array([[  1.0,  0.0,          0.0,          0.20],
