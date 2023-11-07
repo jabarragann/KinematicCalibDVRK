@@ -109,8 +109,8 @@ def perform_hand_eye():
 
     A_data = data_dict["measured_cp"]
     B_data = data_dict["marker_measured_cp"]
-    X = None #G_T_M -> marker to gripper transform
-    Y = None #R_T_T -> tool to robot transform
+    X = None #T_GM -> marker to gripper transform
+    Y = None #T_RT -> tracker to robot transform
     X_est,Y_est, Y_est_check, ErrorStats = Batch_Processing.pose_estimation(A=A_data, B=B_data)
 
     x=0
@@ -118,7 +118,7 @@ def perform_hand_eye():
     log.info(Y_est)
     log.info(f"ErrorStats mean: {ErrorStats[0]} std: {ErrorStats[1]}")
 
-    save_hand_eye_to_json(file_path.parent, X_est, Y_est, ErrorStats[0], ErrorStats[1])
+    save_hand_eye_to_json(file_path.parent, T_GM=X_est, T_RT = Y_est, mean=ErrorStats[0], std=ErrorStats[1])
 
 if __name__ == "__main__":
     perform_hand_eye()
