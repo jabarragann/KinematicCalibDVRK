@@ -9,7 +9,7 @@ import numpy as np
 
 log = Logger(__name__).log
 
-def perform_hand_eye():
+def fk_example():
     record_dict = DataRecorder.create_records()
     file_path = "./data/experiments/repetabability_experiment_rosbag01/01-11-2023-20-24-30/record_001.csv"
     # file_path = "./data/experiments/repetabability_experiment_rosbag01/01-11-2023-20-28-58/record_001.csv"
@@ -26,7 +26,7 @@ def perform_hand_eye():
     psm_kin = DvrkPsmKin()
     calculated_cp = psm_kin.fkine(measured_jp)
 
-    idx = 50 
+    idx = 150 
     log.info("measured from robot")
     log.info(measured_cp[:,:,idx])
     log.info("calculated with python fkine model")
@@ -36,4 +36,4 @@ def perform_hand_eye():
 
 
 if __name__ == "__main__":
-    perform_hand_eye()
+    fk_example()
