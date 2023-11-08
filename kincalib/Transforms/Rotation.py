@@ -70,11 +70,14 @@ class Rotation3D:
             raise ValueError("rot_vec needs to of shape (3,)")
 
         theta = np.linalg.norm(rot_vec)
-        rot_vec = rot_vec / theta
-        K = Rotation3D.skew(rot_vec)
-        I = np.eye(3, 3)
 
-        return Rotation3D(I + np.sin(theta) * K + (1 - np.cos(theta)) * (K @ K))
+        if np.isclose(theta, 0):
+            return Rotation3D(np.eye(3, 3))
+        else:
+            rot_vec = rot_vec / theta
+            K = Rotation3D.skew(rot_vec)
+            I = np.eye(3, 3)
+            return Rotation3D(I + np.sin(theta) * K + (1 - np.cos(theta)) * (K @ K))
 
     def as_rotvec(self):
         return scipy_rotation.from_matrix(self.R).as_rotvec()
