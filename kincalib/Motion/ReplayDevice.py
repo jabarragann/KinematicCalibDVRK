@@ -9,18 +9,30 @@ import dvrk
 log = Logger(__name__).log
 
 
-def create_psm_handle(name, expected_interval=0.1):
-    ral = crtk.ral(name + "_crtk")
-    return dvrk.arm(ral=ral, arm_name=name, expected_interval=expected_interval)
+def create_psm_handle(name,  type:str, expected_interval=0.1):
+    assert type in ["ambf","dvrk"], "type must be either ambf or dvrk"
+
+    if type == "dvrk":
+        ral = crtk.ral(name + "_crtk")
+        return dvrk.arm(ral=ral, arm_name=name, expected_interval=expected_interval)
+    elif type == "ambf":
+        from surgical_robotics_challenge.psm_arm import PSMBlocking
+        from surgical_robotics_challenge.simulation_manager import SimulationManager
+        name = name.lower()
+        sim_manager = SimulationManager(name+"_ambf")
+        return PSMBlocking(sim_manager, name=name, add_joint_errors=False)
 
 
-def home_device(arm):
-    print("-- Enabling arm")
-    if not arm.enable(10):
-        sys.exit("-- Failed to enable within 10 seconds")
-    print("-- Homing arm")
-    if not arm.home(10):
-        sys.exit("-- Failed to home within 10 seconds")
+def home_device(arm, type:str):
+    assert type in ["ambf","dvrk"], "type must be either ambf or dvrk"
+
+    if type in "dvrk":
+        log.info("-- Enabling arm")
+        if not arm.enable(10):
+            sys.exit("-- Failed to enable within 10 seconds")
+        log.info("-- Homing arm")
+        if not arm.home(10):
+            sys.exit("-- Failed to home within 10 seconds")
 
 
 class RobotHandler:

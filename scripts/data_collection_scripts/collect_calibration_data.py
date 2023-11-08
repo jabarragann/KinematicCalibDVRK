@@ -30,12 +30,14 @@ def save_configurations(config_dict: dict, filename: Path):
 
 def report_and_confirm(config_dict) -> str:
     log.info("Collection information")
-    log.info(f"Use real_setup:    {config_dict['use_real_setup']}")
-    log.info(f"Data root dir:     {config_dict['output_path']}")
-    log.info(f"Trajectory type    {config_dict['traj_type']}")
-    log.info(f"Trajectory length: {config_dict['traj_size']}")
-    log.info(f"Rosbag:            {config_dict['rosbag_path']}")
-    log.info(f"Description:       {config_dict['description']}")
+    for key, value in config_dict.items():
+        log.info(f"{key}: {value}")
+    # log.info(f"Use real_setup:    {config_dict['use_real_setup']}")
+    # log.info(f"Data root dir:     {config_dict['output_path']}")
+    # log.info(f"Trajectory type    {config_dict['traj_type']}")
+    # log.info(f"Trajectory length: {config_dict['traj_size']}")
+    # log.info(f"Rosbag:            {config_dict['rosbag_path']}")
+    # log.info(f"Description:       {config_dict['description']}")
 
     ans = input(
         'Press "y" to start data collection trajectory. Only replay trajectories that you know. '
@@ -51,20 +53,21 @@ def report_and_confirm(config_dict) -> str:
     help="Marker config file",
 )
 @click.option("--marker_name", type=str, default="dvrk_tip_frame")
-@click.option("--traj_type", type=click.Choice(["rosbag", "random", "soft"]), default="soft")
+@click.option("--traj_type", type=click.Choice(["rosbag", "random", "soft"]), default="rosbag")
 @click.option("--traj_size", type=int, default=50)
 @click.option("--rosbag_path", type=click.Path(exists=True, path_type=Path), default="./data/dvrk_recorded_motions/pitch_exp_traj_01_test_cropped.bag")
 @click.option("--description", type=str, default="")
+@click.option("--arm_type", type=click.Choice(["ambf","dvrk"]), default="ambf")
 @click.option(
     "--real/--sim",
-    "use_real_setup",
+    "use_real_sensor",
     is_flag=True,
-    default=True,
-    help="Use real or simulated devices",
+    default=False,
+    help="--real to use real atracsys sensor, --sim to use dummy sensor",
 )
-@click.option("--save_every", type=int, default=20, help="Send data to csv every n samples")
+@click.option("--save_every", type=int, default=400, help="Send data to csv every n samples")
 def main(
-    marker_config, marker_name, traj_type, traj_size, rosbag_path, description, use_real_setup, save_every
+    marker_config, marker_name, traj_type, traj_size, rosbag_path, description, use_real_sensor, arm_type, save_every
 ):
     # Save config
     now = datetime.now()
@@ -77,15 +80,16 @@ def main(
         traj_size=traj_size,
         rosbag_path=str(rosbag_path),
         description=description,
-        use_real_setup=use_real_setup,
+        use_real_sensor=use_real_sensor,
+        arm_type = arm_type,
         save_every = save_every,
     )
     config_dict["output_path"] = str(output_path)
 
     # Create devices
-    arm = create_psm_handle("PSM2", expected_interval=0.01)
-    home_device(arm)
-    if use_real_setup:
+    arm = create_psm_handle("PSM2", type=arm_type, expected_interval=0.01)
+    home_device(arm, type=arm_type)
+    if use_real_sensor:
         fusion_track = FusionTrack(marker_config)
     else:
         fusion_track = FusionTrackDummy(marker_config)
