@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Dict, List
 
 import pandas as pd
+import kincalib
 from kincalib.Record.DataRecorder import DataReaderFromCSV, DataRecorder
 from kincalib.Calibration.HandEyeCalibration import Batch_Processing
 from kincalib.Transforms.Rotation import Rotation3D
@@ -23,10 +24,14 @@ class ExperimentalData:
 
     def __post_init__(self):
         self.calculate_error_metrics()
+        self.actual_jp = self.calculate_actual_jp()
 
     def calculate_error_metrics(self):
         self.position_error = self.calculate_position_error(T_RG=self.T_RG, T_RG_actual=self.T_RG_actual)
         self.orientation_error = self.calculate_orientation_error(T_RG=self.T_RG, T_RG_actual=self.T_RG_actual)
+    
+    def calculate_actual_jp(self):
+        return kincalib.calculate_ik(self.T_RG_actual)
     
     def convert_to_dataframe(self)->pd.DataFrame:
         temp_dict = dict(q4 = self.measured_jp[:,3], 
@@ -118,12 +123,28 @@ def plot_robot_error(experimental_data:ExperimentalData):
     sns.scatterplot(x="q6", y="orientation_error", data=error_data, ax=ax[2,1])
 
     plt.show()
-    
+
+def plot_correction_offset(experimental_data:ExperimentalData):  
+    sub_params = dict(top=0.88, bottom=0.06, left=0.07, right=0.95, hspace=0.62, wspace=0.31, )
+    figsize = (7.56, 5.99)
+
+    fig, ax = plt.subplots(6,2, sharex=True,figsize=figsize)
+    fig.subplots_adjust(**sub_params)
+
+    correction_offset = experimental_data.measured_jp - experimental_data.actual_jp
+    for i in range(6):
+        ax[i,0].plot(experimental_data.measured_jp[:,i])
+        ax[i,0].set_title(f"q{i+1}")
+        ax[i,1].plot(correction_offset[:,i])
+        ax[i,1].set_title(f"correction offset q{i+1}")
+
+    plt.show()
+
 
 def analyze_robot_error():
-    # exp_root = "./data/experiments/repetabability_experiment_rosbag01/01-11-2023-20-24-30"
-    # exp_root = "./data/experiments/repetabability_experiment_rosbag01/01-11-2023-20-28-58"
-    exp_root = "./data/experiments/repetabability_experiment_rosbag01/01-11-2023-20-33-24"
+    # exp_root = "./data/experiments/repetability_experiment_rosbag01/01-11-2023-20-24-30"
+    # exp_root = "./data/experiments/repetability_experiment_rosbag01/01-11-2023-20-28-58"
+    exp_root = "./data/experiments/repetability_experiment_rosbag01/01-11-2023-20-33-24"
     exp_root= Path(exp_root )
 
     file_path = exp_root / "record_001.csv"
@@ -137,6 +158,7 @@ def analyze_robot_error():
     experimental_data = ExperimentalData.load_from_file(file_path=file_path, hand_eye_file=hand_eye_file)
 
     plot_robot_error(experimental_data)
+    plot_correction_offset(experimental_data)
 
 if __name__ == "__main__":
     analyze_robot_error()
