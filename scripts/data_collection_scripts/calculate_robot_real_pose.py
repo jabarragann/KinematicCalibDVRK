@@ -142,9 +142,9 @@ def plot_correction_offset(experimental_data:ExperimentalData):
 
 
 def analyze_robot_error():
-    # exp_root = "./data/experiments/repetability_experiment_rosbag01/01-11-2023-20-24-30"
-    # exp_root = "./data/experiments/repetability_experiment_rosbag01/01-11-2023-20-28-58"
-    exp_root = "./data/experiments/repetability_experiment_rosbag01/01-11-2023-20-33-24"
+    # exp_root = "./data/experiments/repeatability_experiment_rosbag01/01-11-2023-20-24-30"
+    # exp_root = "./data/experiments/repeatability_experiment_rosbag01/01-11-2023-20-28-58"
+    exp_root = "./data/experiments/repeatability_experiment_rosbag01/01-11-2023-20-33-24"
     exp_root= Path(exp_root )
 
     file_path = exp_root / "record_001.csv"

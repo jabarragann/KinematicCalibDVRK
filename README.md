@@ -44,5 +44,9 @@ List of atracsys topics
 /atracsys/dvrk_tip_frame/registration_error #Type: std_msgs/Float64
 ```
 
+**Robotics toolbox changes matplotlib figures**
+```
+import roboticstoolbox
+```
 
 
