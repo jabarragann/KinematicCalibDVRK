@@ -11,11 +11,12 @@ from surgical_robotics_challenge.kinematics.psmIK import compute_FK, compute_IK,
 import surgical_robotics_challenge
 import json
 import numpy as np
+import kincalib
 
 log = Logger(__name__).log
 
 def plot_joints(data_dict: Dict[str, np.ndarray]):
-    cal_jp = calculate_ik(data_dict)
+    cal_jp = kincalib.calculate_ik(data_dict["measured_cp"])
 
     sub_params = dict(top=0.94, bottom=0.08, left=0.06, right=0.95, hspace=0.93, wspace=0.20, )
     figsize = (9.28, 6.01)
@@ -33,17 +34,6 @@ def plot_joints(data_dict: Dict[str, np.ndarray]):
 
     axes[0,0].legend()
     plt.show() 
-
-def calculate_ik(data_dict: Dict[str, np.ndarray]):
-    measured_cp = data_dict["measured_cp"]
-    all_calculated_jp = np.zeros((data_dict["measured_jp"].shape[0], 6))
-    for idx in range(data_dict["measured_jp"].shape[0]):
-        calculated_jp = compute_IK(convert_mat_to_frame(measured_cp[:,:,idx]))
-        calculated_jp = np.array(calculated_jp)
-        # TODO: remove this hack when compute_IK is fixed.
-        all_calculated_jp[idx,:] = calculated_jp - np.array([0,0,0.0073,0,0,0])
-
-    return all_calculated_jp
 
 def demo(data_dict: Dict[str, np.ndarray]):
     measured_jp = data_dict["measured_jp"]
