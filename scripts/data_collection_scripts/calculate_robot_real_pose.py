@@ -8,6 +8,7 @@ from kincalib.Record.DataRecorder import DataReaderFromCSV, DataRecorder
 from kincalib.Calibration.HandEyeCalibration import Batch_Processing
 from kincalib.Transforms.Rotation import Rotation3D
 from kincalib.utils.Logger import Logger
+from kincalib.utils import calculate_orientation_error, calculate_position_error
 import json
 import numpy as np
 import matplotlib.pyplot as plt
@@ -27,8 +28,8 @@ class ExperimentalData:
         self.actual_jp = self.calculate_actual_jp()
 
     def calculate_error_metrics(self):
-        self.position_error = self.calculate_position_error(T_RG=self.T_RG, T_RG_actual=self.T_RG_actual)
-        self.orientation_error = self.calculate_orientation_error(T_RG=self.T_RG, T_RG_actual=self.T_RG_actual)
+        self.position_error = calculate_position_error(T_RG=self.T_RG, T_RG_actual=self.T_RG_actual)
+        self.orientation_error = calculate_orientation_error(T_RG=self.T_RG, T_RG_actual=self.T_RG_actual)
     
     def calculate_actual_jp(self):
         return kincalib.calculate_ik(self.T_RG_actual)
