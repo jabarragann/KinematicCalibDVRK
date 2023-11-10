@@ -1,6 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
+import time
 from typing import Callable, Dict, List
 import numpy as np
 import pandas as pd
@@ -8,10 +9,11 @@ from tf_conversions import posemath as pm
 from dvrk import psm
 from kincalib.Transforms.Rotation import Rotation3D
 from kincalib.utils.Logger import Logger
-from kincalib.Sensors.FusionTrack import FusionTrackAbstract
+from kincalib.Sensors import FusionTrackAbstract, MarkerPoseMeasurement
 from kincalib.Record.Record import (
     CartesianRecord,
     JointRecord,
+    MarkerCartesianRecord,
     Record,
     RecordCollection,
     RecordCollectionCsvSaver,
@@ -35,29 +37,23 @@ class DataRecorder:
         self.index = None
 
         self.func_dict: Dict[str, Callable] = {}
+        self.records_dict: Dict[str, Record] = self.create_records() 
         # Optical tracker
-        self.marker_measured_cp = CartesianRecord("marker_measured_cp", "marker_")
-        self.func_dict[self.marker_measured_cp.record_name] = lambda: self.ftk_handle.get_data(
-            self.marker_name
-        )
+        # self.marker_measured_cp = CartesianRecord("marker_measured_cp", "marker_")
+        self.func_dict[self.records_dict["marker_measured_cp"].record_name] = self.get_ftk_data 
 
         # Robot
-        self.measured_jp = JointRecord("measured_jp", "measured_")
-        self.func_dict[self.measured_jp.record_name] = self.robot_handle.measured_jp
-        self.measured_cp = CartesianRecord("measured_cp", "measured_")
-        self.func_dict[self.measured_cp.record_name] = self.get_measured_cp_data
+        # self.measured_jp = JointRecord("measured_jp", "measured_")
+        self.func_dict[self.records_dict["measured_jp"].record_name] = self.robot_handle.measured_jp
+        # self.measured_cp = CartesianRecord("measured_cp", "measured_")
+        self.func_dict[self.records_dict["measured_cp"].record_name] = self.get_measured_cp_data
 
-        self.setpoint_jp = JointRecord("setpoint_jp", "setpoint_")
-        self.func_dict[self.setpoint_jp.record_name] = self.robot_handle.setpoint_jp
-        self.setpoint_cp = CartesianRecord("setpoint_cp", "setpoint_")
-        self.func_dict[self.setpoint_cp.record_name] = self.get_setpoint_cp_data
-        self.record_list = [
-            self.marker_measured_cp,
-            self.measured_jp,
-            self.measured_cp,
-            self.setpoint_jp,
-            self.setpoint_cp,
-        ]
+        # self.setpoint_jp = JointRecord("setpoint_jp", "setpoint_")
+        self.func_dict[self.records_dict["setpoint_jp"].record_name] = self.robot_handle.setpoint_jp
+        # self.setpoint_cp = CartesianRecord("setpoint_cp", "setpoint_")
+        self.func_dict[self.records_dict["setpoint_cp"].record_name] = self.get_setpoint_cp_data
+
+        self.record_list = list(self.records_dict.values())
         self.rec_collection = RecordCollection(self.record_list, data_saver=self.data_saver)
 
     @classmethod 
@@ -69,22 +65,22 @@ class DataRecorder:
                 measured_jp = (JointRecord, "measured_jp", "measured_")
         """
         # Optical tracker
-        marker_measured_cp = CartesianRecord("marker_measured_cp", "marker_")
+        marker_measured_cp = MarkerCartesianRecord("marker_measured_cp", "marker_")
         # Robot
         measured_jp = JointRecord("measured_jp", "measured_")
         measured_cp = CartesianRecord("measured_cp", "measured_")
         setpoint_jp = JointRecord("setpoint_jp", "setpoint_")
         setpoint_cp = CartesianRecord("setpoint_cp", "setpoint_")
 
-        record_list = dict( 
+        record_dict = dict( 
             marker_measured_cp = marker_measured_cp,
             measured_jp = measured_jp,
             measured_cp = measured_cp,
             setpoint_jp = setpoint_jp,
             setpoint_cp = setpoint_cp,
          )
-        assert cls.does_record_names_match_dict_keys(record_list), "Record names must match dict keys"
-        return record_list
+        assert cls.does_record_names_match_dict_keys(record_dict), "Record names must match dict keys"
+        return record_dict
 
     @staticmethod
     def does_record_names_match_dict_keys(record_dict:Dict[str,Record])->bool:
@@ -93,8 +89,12 @@ class DataRecorder:
                 return False
         return True
 
-
-    def get_ftk_data(self):
+    def get_ftk_data(self)->MarkerPoseMeasurement:
+        """
+        Clear data and sleep before getting data to avoid sync issues.
+        """
+        self.ftk_handle.clear_data()
+        time.sleep(0.1)
         return self.ftk_handle.get_data(self.marker_name)
 
     def get_measured_cp_data(self):
@@ -105,8 +105,8 @@ class DataRecorder:
 
     def collect_data(self, index):
         self.index = index + 1
-        for rec_name, action in self.func_dict.items():
-            self.rec_collection.get_record(rec_name).add_data(index, action())
+        for rec_name, action_to_get_data in self.func_dict.items():
+            self.rec_collection.get_record(rec_name).add_data(index, action_to_get_data())
 
         if self.index % self.save_every == 0:
             log.info(f"Dumping data to csv file...")

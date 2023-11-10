@@ -57,7 +57,7 @@ def report_and_confirm(config_dict) -> str:
 @click.option("--traj_size", type=int, default=50)
 @click.option("--rosbag_path", type=click.Path(exists=True, path_type=Path), default="./data/dvrk_recorded_motions/pitch_exp_traj_01_test_cropped.bag")
 @click.option("--description", type=str, default="")
-@click.option("--arm_type", type=click.Choice(["ambf","dvrk"]), default="ambf")
+@click.option("--arm_type", type=click.Choice(["ambf","dvrk"]), default="dvrk")
 @click.option(
     "--real/--sim",
     "use_real_sensor",
