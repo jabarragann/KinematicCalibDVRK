@@ -121,6 +121,7 @@ def main(
         try:
             trajectory_player.replay_trajectory(execute_cb=True)
         finally:
+            log.info("Save remaining data ....")
             data_recorder.rec_collection.save_data()
 
 

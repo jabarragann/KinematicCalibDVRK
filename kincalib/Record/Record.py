@@ -17,18 +17,34 @@ class RecordCollectionCsvSaver:
         self.file_counter = 1
 
     def save(self, records_list: List[Record]):
-        headers = ["traj_index"]
-        data = []
-        for r in records_list:
-            headers += r.headers
-            data.append(np.array(r.data_array))
+        
+        headers, data, index_array = self.collect_data_from_records(records_list)
+
         data = np.concatenate(data, axis=1)
-        data = np.concatenate((np.array(r.index_array).reshape(-1, 1), data), axis=1)
+        data = np.concatenate((np.array(index_array).reshape(-1, 1), data), axis=1)
 
         df = pd.DataFrame(data, columns=headers)
         df.to_csv(self.output_path / f"record_{self.file_counter:03d}.csv", index=False)
         self.file_counter += 1
+    
+    def collect_data_from_records(self, records_list: List[Record]):
+        """Extra data will happen if the script is interrupted before querying all new data"""
+        headers = ["traj_index"]
+        data = []
+        last_record = records_list[-1]
 
+        pts_in_last_record = np.array(last_record.data_array).shape[0]
+        for r in records_list:
+            headers += r.headers
+
+            arr = np.array(r.data_array)
+            if arr.shape[0] != pts_in_last_record: 
+                arr = arr[:pts_in_last_record,:]
+            data.append(arr)
+
+        index_array = r.index_array
+
+        return headers, data, index_array
 
 @dataclass
 class RecordCollection:
