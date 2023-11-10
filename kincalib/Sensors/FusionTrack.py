@@ -3,22 +3,17 @@ Fusion Track sensor handle
 """
 
 
-from re import I
 import rospy
-import PyKDL
-import std_msgs
+from std_msgs.msg import Float64
 import tf_conversions.posemath as pm
 from sensor_msgs.msg import JointState
+import message_filters
 import geometry_msgs.msg
 import time
 import numpy as np
 from typing import Dict, List, Tuple
-import scipy
-from scipy.spatial import distance
 from pathlib import Path
-import matplotlib.pyplot as plt
 from kincalib.utils.Logger import Logger
-import sys
 from dataclasses import dataclass
 import json
 from abc import ABC, abstractmethod
@@ -27,6 +22,11 @@ import click
 np.set_printoptions(precision=4, suppress=True)
 log = Logger(__name__).log
 
+
+@dataclass
+class MarkerPoseMeasurement:
+    pose: np.ndarray
+    reg_error: float
 
 @dataclass
 class FusionTrackAbstract(ABC):
@@ -43,11 +43,15 @@ class FusionTrackAbstract(ABC):
             return tool_names
 
     @abstractmethod
-    def get_data(self, marker_name: str) -> np.ndarray:
+    def get_data(self, marker_name: str) -> MarkerPoseMeasurement:
         pass
 
     @abstractmethod
-    def get_all_data(self) -> Dict[str, np.ndarray]:
+    def get_all_data(self) -> Dict[str, MarkerPoseMeasurement]:
+        pass
+
+    @abstractmethod
+    def clear_data(self)->None:
         pass
 
 
@@ -56,17 +60,26 @@ class MarkerSubscriber:
     marker_name: str
 
     def __post_init__(self):
-        self.marker_pose: np.ndarray = None
+        self.marker_measurement: MarkerPoseMeasurement = None
         self.rostopic = "/atracsys/" + self.marker_name + "/measured_cp"
-        self.__marker_subs = rospy.Subscriber(
-            self.rostopic,
-            geometry_msgs.msg.PoseStamped,
-            self.marker_pose_cb,
-        )
+        self.reg_error_topic = "/atracsys/" + self.marker_name + "/registration_error"
 
-    def marker_pose_cb(self, msg) -> None:
-        self.marker_pose = pm.toMatrix(pm.fromMsg(msg.pose))
+        self.topics:List[Tuple] = [(self.rostopic, geometry_msgs.msg.PoseStamped), (self.reg_error_topic, Float64)]
+        self.subscribers: List[message_filters.Subscriber] = []
+        for topic in self.topics:
+            self.subscribers.append(message_filters.Subscriber(topic[0], topic[1]))
 
+        ts = message_filters.ApproximateTimeSynchronizer(self.subscribers, queue_size=5, slop=0.05)
+        ts.registerCallback(self.data_callback)
+
+    def data_callback(self, *inputs_msg):
+        marker_pose = inputs_msg[0] 
+        reg_error = inputs_msg[1].data
+        self.marker_measurement = MarkerPoseMeasurement(pose=marker_pose, reg_error=reg_error)
+
+    def msg_to_marker_pose(self, msg:geometry_msgs.msg.PoseStamped)->np.ndarray:
+        return pm.toMatrix(pm.fromMsg(msg.pose))
+        
     def get_data(self) -> np.ndarray:
         data_to_return = self.marker_pose
         self.marker_pose = None
@@ -77,6 +90,10 @@ class MarkerSubscriber:
             return True
         else:
             return False
+
+    def clear_data(self):
+        self.marker_measurement = None
+
 
 
 @dataclass
@@ -96,12 +113,12 @@ class FusionTrack(FusionTrackAbstract):
         for name in self.marker_names:
             self.subscribers[name] = MarkerSubscriber(name)
 
-    def get_data(self, marker_name: str) -> np.ndarray:
+    def get_data(self, marker_name: str) -> MarkerPoseMeasurement:
         """ Warning: None data can be generated if no measurement was found
         """
         return self.subscribers[marker_name].get_data()
 
-    def get_all_data(self) -> Dict[str, np.ndarray]:
+    def get_all_data(self) -> Dict[str, MarkerPoseMeasurement]:
         """ Warning: None data can be generated if no measurement was found
         """
         data = {}
@@ -116,14 +133,17 @@ class FusionTrackDummy(FusionTrackAbstract):
     def __post_init__(self):
         super().__post_init__()
 
-    def get_data(self, marker_name: str):
-        return np.identity(4)
+    def get_data(self, marker_name: str)->MarkerPoseMeasurement:
+        return MarkerPoseMeasurement( np.identity(4), 0.0 )
 
     def get_all_data(self):
         data = {}
         for name in self.marker_names:
-            data[name] = np.identity(4)
+            data[name] = MarkerPoseMeasurement( np.identity(4), 0.0 )
         return data
+    
+    def clear_data(self):
+        pass
 
 
 @click.command("cli", context_settings={"show_default": True})
