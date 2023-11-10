@@ -109,9 +109,9 @@ def plot_robot_error(experimental_data:ExperimentalData):
     #     ax[i+1,0].plot(measured_jp[:,3+i])
     #     ax[i+1,1].plot(measured_jp[:,3+i])
 
-    major_ticks = np.arange(0,350,25) 
     [a.grid() for a in ax.flatten()]
-    [a.set_xticks(major_ticks) for a in ax.flatten()]
+    # major_ticks = np.arange(0,350,25) 
+    # [a.set_xticks(major_ticks) for a in ax.flatten()]
 
     # correlation plot
     fig, ax = plt.subplots(3,2)
@@ -123,6 +123,13 @@ def plot_robot_error(experimental_data:ExperimentalData):
     sns.scatterplot(x="q5", y="orientation_error", data=error_data, ax=ax[1,1])
     sns.scatterplot(x="q6", y="orientation_error", data=error_data, ax=ax[2,1])
 
+    fig, ax = plt.subplots(2,2)
+    # ax = np.expand_dims(ax, axis=0)
+    stat = "proportion"
+    sns.histplot(data=error_data, x="pos_error", ax=ax[0,0], stat=stat, kde=True)
+    sns.histplot(data=error_data, x="orientation_error", ax=ax[0,1], stat=stat, kde=True)
+    sns.histplot(data=error_data, x="pos_error", ax=ax[1,0], stat=stat, kde=True, cumulative=True)
+    sns.histplot(data=error_data, x="orientation_error", ax=ax[1,1], stat=stat, kde=True, cumulative=True)
     plt.show()
 
 def plot_correction_offset(experimental_data:ExperimentalData):  
@@ -145,10 +152,17 @@ def plot_correction_offset(experimental_data:ExperimentalData):
 def analyze_robot_error():
     # exp_root = "./data/experiments/repeatability_experiment_rosbag01/01-11-2023-20-24-30"
     # exp_root = "./data/experiments/repeatability_experiment_rosbag01/01-11-2023-20-28-58"
-    exp_root = "./data/experiments/repeatability_experiment_rosbag01/01-11-2023-20-33-24"
+    # exp_root = "./data/experiments/repeatability_experiment_rosbag01/01-11-2023-20-33-24"
+
+
+    exp_root = "./data/experiments/data_collection1/08-11-2023-19-23-55"
+    # exp_root = "./data/experiments/data_collection1/08-11-2023-19-33-54"
+    # exp_root = "./data/experiments/data_collection1/08-11-2023-19-52-14"
+    
+
     exp_root= Path(exp_root )
 
-    file_path = exp_root / "record_001.csv"
+    file_path = exp_root / "combined_data.csv"
     hand_eye_file = exp_root / "hand_eye_calib.json"
 
     assert file_path.exists(), "File does not exist"

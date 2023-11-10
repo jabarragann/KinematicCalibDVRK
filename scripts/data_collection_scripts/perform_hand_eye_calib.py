@@ -97,9 +97,13 @@ def save_hand_eye_to_json(path:Path, T_GM:np.ndarray, T_RT:np.ndarray, mean:floa
 
 def perform_hand_eye():
     record_dict = DataRecorder.create_records()
-    file_path = "./data/experiments/repetabability_experiment_rosbag01/01-11-2023-20-24-30/record_001.csv"
+    # file_path = "./data/experiments/repetabability_experiment_rosbag01/01-11-2023-20-24-30/record_001.csv"
     # file_path = "./data/experiments/repetabability_experiment_rosbag01/01-11-2023-20-28-58/record_001.csv"
     # file_path = "./data/experiments/repetabability_experiment_rosbag01/01-11-2023-20-33-24/record_001.csv"
+
+    # file_path = "./data/experiments/data_collection1/08-11-2023-19-23-55/combined_data.csv"
+    # file_path = "./data/experiments/data_collection1/08-11-2023-19-33-54/combined_data.csv"
+    file_path = "./data/experiments/data_collection1/08-11-2023-19-52-14/combined_data.csv"
 
     file_path = Path(file_path)
     assert file_path.exists(), "File does not exist"
