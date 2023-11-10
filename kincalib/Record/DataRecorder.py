@@ -124,6 +124,8 @@ class DataReaderFromCSV:
         self.df = self.df.reset_index(drop=True)    
 
         self.data_dict:dict[str, np.ndarray] = {}
+        self.data_dict["traj_index"] = self.df.loc[:, "traj_index"].to_numpy()
+
         for record in self.record_dict.values():
             self.extract_data(record)
 

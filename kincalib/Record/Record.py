@@ -2,11 +2,17 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Tuple
 import numpy as np
 from kincalib.Transforms.Rotation import Rotation3D
 import pandas as pd
+from collections import namedtuple
 
+
+@dataclass
+class PoseErrorMetric:
+    position_error: float
+    orientation_error: float
 
 @dataclass
 class RecordCollectionCsvSaver:
@@ -15,7 +21,7 @@ class RecordCollectionCsvSaver:
     def __post_init__(self):
         self.file_counter = 1
 
-    def save(self, records_list: List[Record]):
+    def save(self, records_list: List[Record], file_name: str = None):
         headers = ["traj_index"]
         data = []
         for r in records_list:
@@ -25,7 +31,13 @@ class RecordCollectionCsvSaver:
         data = np.concatenate((np.array(r.index_array).reshape(-1, 1), data), axis=1)
 
         df = pd.DataFrame(data, columns=headers)
-        df.to_csv(self.output_path / f"record_{self.file_counter:03d}.csv", index=False)
+
+        if file_name is None: 
+            saving_path = self.output_path / f"record_{self.file_counter:03d}.csv"
+        else:
+            saving_path = self.output_path / file_name
+
+        df.to_csv(saving_path, index=False)
         self.file_counter += 1
 
 
@@ -131,11 +143,34 @@ class CartesianRecord(Record):
 
         return True
 
+class ErrorRecord(Record):
+    def __init__(self, record_name: str, header_prefix: str):
+        headers = self.get_headers(header_prefix)
+        super().__init__(record_name, headers)
+    
+    def get_headers(self, prefix):
+        headers = ["pos_error", "rot_error"]
+        return [prefix + h for h in headers]
+
+    def add_data(self, idx: int, data: PoseErrorMetric) -> bool:
+        """
+        Error data is a tuple of (position_error, orientation_error) 
+        """
+        data_to_save = np.empty(2)
+        if data is None:
+            data_to_save[:] = np.nan 
+        else: 
+            data_to_save[:] = [data.position_error, data.orientation_error]
+
+        self.data_array.append(np.array(data_to_save))
+        self.index_array.append(idx)
+
+        return True
 
 if __name__ == "__main__":
     jp_rec = JointRecord("measured_jp", "measured_")
     cp_rec = CartesianRecord("measured_cp", "measured_")
-    rec_collection = RecordCollection([jp_rec, cp_rec])
+    rec_collection = RecordCollection([jp_rec, cp_rec], None)
 
     print(jp_rec.headers)
     print(cp_rec.headers)
