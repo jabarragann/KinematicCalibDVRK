@@ -15,7 +15,7 @@ data/
 .vscode
 .vs
 outputs
-
+outputs_hydra
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
