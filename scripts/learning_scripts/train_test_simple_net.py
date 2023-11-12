@@ -1,52 +1,26 @@
 from __future__ import annotations
+import sys
 from dataclasses import dataclass
 from pathlib import Path
-from natsort import natsorted
-import numpy as np
-from typing import List, Tuple
 from matplotlib import pyplot as plt
-from tqdm import tqdm
-from PIL import Image
 import torch
-from kincalib.Hydra import HydraConfig
 from kincalib.Learning import Trainer, BestMLP2
 from kincalib.utils.Logger import Logger
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import OmegaConf
 import hydra
-from hydra.core.config_store import ConfigStore
 from kincalib.Learning.Dataset import JointsDataset1, Normalizer
 from torch.utils.data import DataLoader
-from hydra.core.hydra_config import HydraConfig
+
+struct_config = Path(__file__).parent / (Path(__file__).with_suffix("").name + "_confs")
+sys.path.append(str(struct_config))
+from train_test_simple_net_confs.structured_confs import (
+    ExperimentConfig,
+    register_struct_configs,
+)
+
+register_struct_configs()
 
 log = Logger(__name__).log
-
-
-@dataclass
-class ExperimentConfig:
-    global_device: bool
-    output_path: Path
-    path_config: PathConfig
-    actions: Actions
-    train_config: TrainConfig
-
-
-@dataclass
-class PathConfig:
-    workspace: str
-    train_paths: List[str]
-    test_paths: List[str]
-
-
-@dataclass
-class Actions:
-    train: bool
-    test: bool
-
-
-class TrainConfig:
-    batch_size: int
-    epochs: int
-    log_interval: int
 
 
 @dataclass
@@ -85,8 +59,7 @@ def train_model(cfg: ExperimentConfig, dataset_container: DatasetContainer):
     output_path = Path(cfg.output_path)
     model = BestMLP2()
     model.train()
-    learning_rate = 0.00094843454
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    optimizer = torch.optim.Adam(model.parameters(), lr=cfg.train_config.lr)
 
     if cfg.global_device:
         net = model.cuda()
@@ -127,11 +100,6 @@ def show_training_plots(trainer: Trainer):
     ax[1].grid()
 
     plt.show()
-
-
-# TODO: This triggers an error. Learn more about Omega conf
-# cs = ConfigStore.instance()
-# cs.store(name="base_config", node=ExperimentConfig)
 
 
 @hydra.main(

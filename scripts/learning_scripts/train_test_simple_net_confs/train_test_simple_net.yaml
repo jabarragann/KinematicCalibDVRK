@@ -1,10 +1,13 @@
 defaults:
+  - base_config
   - path_config/juanubuntu
   - _self_
 
 hydra:
   run:
-    dir: ./outputs_hydra/${hydra.job.config_name}_${now:%Y%m%d}_${now:%H%M%S}_${global_device}
+    dir: ./outputs_hydra/${hydra.job.config_name}_${now:%Y%m%d}_${now:%H%M%S}
+    # Other configs can be use here. For example:
+    # dir: ./outputs_hydra/${hydra.job.config_name}_${global_device}
 
 output_path: ${hydra:runtime.output_dir}
 global_device: "cuda"
@@ -12,6 +15,7 @@ global_device: "cuda"
 train_config:
   batch_size: 32
   epochs: 100
+  lr: 0.00094843454
   log_interval: 1
 
 actions:

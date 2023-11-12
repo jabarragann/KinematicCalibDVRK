@@ -30,6 +30,15 @@ echo "/home/jbarrag3/research_juan/ros_ws/dvrk_ws/devel/lib/python3/dist-package
 3. The previous compiled should have ignored the atracsys wrapper. Now add the sdk and recompile as described [here](https://github.com/jhu-saw/sawAtracsysFusionTrack/tree/devel)
 4. Recompile ros worspace with `catkin build --force-cmake --summary`
 
+## Scripts usage
+
+**Neural network training**
+
+Neural net training script uses hydra to manage configurations. Default params are defined in config folder. When running the script, configurations can be overwritten with they syntax `config_name.param_name=value`. 
+
+```bash
+python ./scripts/learning_scripts/train_test_simple_net.py test_config.batch_size=64 train_config.batch_size=64 train_config.epochs=200
+```
 
 # TODO
 
