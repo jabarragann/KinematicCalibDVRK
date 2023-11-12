@@ -4,10 +4,25 @@ defaults:
 
 hydra:
   run:
-    dir: ./outputs_hydra/${hydra.job.config_name}_${now:%Y%m%d}_${now:%H%M%S}
+    dir: ./outputs_hydra/${hydra.job.config_name}_${now:%Y%m%d}_${now:%H%M%S}_${global_device}
 
-# global_device: "cuda"
+output_path: ${hydra:runtime.output_dir}
+global_device: "cuda"
 
+train_config:
+  batch_size: 32
+  epochs: 100
+  log_interval: 1
+
+actions:
+  train: true
+  test: true
+  # show_images: true
+  # save_test_predictions: true
+  # calculate_metrics: false
+
+test_config:
+  batch_size: 32
 # path_config:
 #   workspace: ???
 #   data_dir: ???
@@ -33,9 +48,3 @@ hydra:
 #   weights_file: ${..path_config.trained_weights_file_path}/${..path_config.trained_weights_file_name}
 #   predictions_dir: "${..path_config.predictions_path}"
 
-actions:
-  train: true
-  test: true
-  # show_images: true
-  # save_test_predictions: true
-  # calculate_metrics: false
