@@ -18,6 +18,7 @@ from dataclasses import dataclass
 log = Logger(__name__).log
 
 
+# TODO: Improve name of attributes. T_RG -> measured_cp
 @dataclass
 class RobotActualPoseCalulator:
     index_array: np.ndarray

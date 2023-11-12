@@ -61,11 +61,11 @@ def plot_correction_offset(experimental_data: RobotActualPoseCalulator):
 def analyze_robot_error():
     # exp_root = "./data/experiments/repeatability_experiment_rosbag01/01-11-2023-20-24-30"
     # exp_root = "./data/experiments/repeatability_experiment_rosbag01/01-11-2023-20-28-58"
-    # exp_root = "./data/experiments/repeatability_experiment_rosbag01/01-11-2023-20-33-24"
+    exp_root = "./data/experiments/repeatability_experiment_rosbag01/01-11-2023-20-33-24"
 
     # exp_root = "./data/experiments/data_collection1/08-11-2023-19-23-55"
     # exp_root = "./data/experiments/data_collection1/08-11-2023-19-33-54"
-    exp_root = "./data/experiments/data_collection1/08-11-2023-19-52-14"
+    # exp_root = "./data/experiments/data_collection1/08-11-2023-19-52-14"
 
     exp_root = Path(exp_root)
 
