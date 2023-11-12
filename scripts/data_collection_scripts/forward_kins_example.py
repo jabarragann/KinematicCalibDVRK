@@ -1,13 +1,14 @@
 from pathlib import Path
 from typing import Dict, List
 from kincalib.Record.DataRecorder import DataReaderFromCSV, DataRecorder
-from kincalib.Calibration.HandEyeCalibration import Batch_Processing
+from kincalib.Calibration.HandEyeCalibration import HandEyeBatchProcessing
 from kincalib.utils.Logger import Logger
 from kincalib.Motion.DvrkKin import DvrkPsmKin
 import json
 import numpy as np
 
 log = Logger(__name__).log
+
 
 def fk_example():
     record_dict = DataRecorder.create_records()
@@ -26,13 +27,13 @@ def fk_example():
     psm_kin = DvrkPsmKin()
     calculated_cp = psm_kin.fkine(measured_jp)
 
-    idx = 150 
+    idx = 150
     log.info("measured from robot")
-    log.info(measured_cp[:,:,idx])
+    log.info(measured_cp[:, :, idx])
     log.info("calculated with python fkine model")
     log.info(calculated_cp[idx].data[0])
     log.info("error")
-    log.info(measured_cp[:,:,idx] - calculated_cp[idx].data[0])
+    log.info(measured_cp[:, :, idx] - calculated_cp[idx].data[0])
 
 
 if __name__ == "__main__":
