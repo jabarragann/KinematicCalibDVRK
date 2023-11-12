@@ -1,21 +1,13 @@
 from __future__ import annotations
 from pathlib import Path
-from typing import Dict, List
-
-import pandas as pd
-import kincalib
-from kincalib.Record.DataRecorder import DataReaderFromCSV, DataRecorder
-from kincalib.Calibration.HandEyeCalibration import HandEyeBatchProcessing
-from kincalib.Transforms.Rotation import Rotation3D
 from kincalib.utils.Logger import Logger
-from kincalib.utils import calculate_orientation_error, calculate_position_error
-import kincalib.Record as records
-import json
-import numpy as np
+from kincalib.utils import (
+    create_cartesian_error_histogram,
+    create_cartesian_error_lineplot,
+)
 import matplotlib.pyplot as plt
 import seaborn as sns
-from dataclasses import dataclass
-from kincalib.Calibration import RobotActualPoseCalulator, HandEyeBatchProcessing
+from kincalib.Calibration import RobotActualPoseCalulator
 
 log = Logger(__name__).log
 
@@ -25,21 +17,7 @@ def plot_robot_error(experimental_data: RobotActualPoseCalulator):
     orientation_error = experimental_data.orientation_error
     error_data = experimental_data.convert_to_dataframe()
 
-    fig, ax = plt.subplots(2, 1, sharex=True)
-    ax = np.expand_dims(ax, axis=0)
-
-    ax[0, 0].plot(position_error)
-    ax[0, 0].set_ylabel("Position error (mm)")
-    ax[0, 1].plot(orientation_error)
-    ax[0, 1].set_ylabel("Orientation error (deg)")
-
-    # for i in range(3):
-    #     ax[i+1,0].plot(measured_jp[:,3+i])
-    #     ax[i+1,1].plot(measured_jp[:,3+i])
-
-    [a.grid() for a in ax.flatten()]
-    # major_ticks = np.arange(0,350,25)
-    # [a.set_xticks(major_ticks) for a in ax.flatten()]
+    fig, axes = create_cartesian_error_lineplot(position_error, orientation_error)
 
     # correlation plot
     fig, ax = plt.subplots(3, 2)
@@ -51,30 +29,8 @@ def plot_robot_error(experimental_data: RobotActualPoseCalulator):
     sns.scatterplot(x="q5", y="orientation_error", data=error_data, ax=ax[1, 1])
     sns.scatterplot(x="q6", y="orientation_error", data=error_data, ax=ax[2, 1])
 
-    fig, ax = plt.subplots(2, 2)
-    fig.suptitle(f"Error distribution (N={error_data.shape[0]})")
-    # ax = np.expand_dims(ax, axis=0)
-    stat = "proportion"
-    sns.histplot(data=error_data, x="pos_error", ax=ax[0, 0], stat=stat, kde=True)
-    sns.histplot(
-        data=error_data, x="orientation_error", ax=ax[0, 1], stat=stat, kde=True
-    )
-    sns.histplot(
-        data=error_data,
-        x="pos_error",
-        ax=ax[1, 0],
-        stat=stat,
-        kde=True,
-        cumulative=True,
-    )
-    sns.histplot(
-        data=error_data,
-        x="orientation_error",
-        ax=ax[1, 1],
-        stat=stat,
-        kde=True,
-        cumulative=True,
-    )
+    fig, axes = create_cartesian_error_histogram(position_error, orientation_error)
+
     plt.show()
 
 
