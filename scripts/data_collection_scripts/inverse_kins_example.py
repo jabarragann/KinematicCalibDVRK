@@ -77,14 +77,14 @@ def demo(data_dict: Dict[str, np.ndarray]):
     calculated_cp2 = compute_FK(measured_jp[idx], 7)
     calculated_jp2 = compute_IK(convert_mat_to_frame(calculated_cp2))
     log.info(calculated_jp2 - measured_jp[idx])
-    log.info(calculated_jp2 - measured_jp[idx] - np.array([0, 0, 0.0073, 0, 0, 0]))
+    log.info(calculated_jp2 - measured_jp[idx])
 
 
 def ik_example():
     record_dict = DataRecorder.create_records()
-    file_path = "./data/experiments/repetabability_experiment_rosbag01/01-11-2023-20-24-30/record_001.csv"
-    # file_path = "./data/experiments/repetabability_experiment_rosbag01/01-11-2023-20-28-58/record_001.csv"
-    # file_path = "./data/experiments/repetabability_experiment_rosbag01/01-11-2023-20-33-24/record_001.csv"
+    file_path = "./data/experiments/repeatability_experiment_rosbag01/01-11-2023-20-24-30/combined_data.csv"
+    # file_path = "./data/experiments/repeatability_experiment_rosbag01/01-11-2023-20-28-58/combined_data.csv"
+    # file_path = "./data/experiments/repeatability_experiment_rosbag01/01-11-2023-20-33-24/combined_data.csv"
 
     file_path = Path(file_path)
     assert file_path.exists(), "File does not exist"
