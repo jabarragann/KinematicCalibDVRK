@@ -113,10 +113,19 @@ def train_model(cfg: ExperimentConfig, dataset_container: DatasetContainer):
 
 def show_training_plots(trainer: Trainer):
     fig, ax = plt.subplots(1, 2)
-    ax[0].plot(trainer.train_epoch_loss_list)
-    ax[0].set_title("train_epoch_loss_list")
-    ax[1].plot(trainer.valid_epoch_loss_list)
-    ax[1].set_title("valid_epoch_loss_list")
+    ax[0].plot(trainer.train_epoch_loss_list, label="train")
+    ax[1].plot(trainer.valid_epoch_loss_list, label="valid")
+    ax[1].axhline(
+        y=trainer.train_epoch_loss_list[-1],
+        color="r",
+        linestyle="--",
+        label="best training",
+    )
+    ax[0].legend()
+    ax[1].legend()
+    ax[0].grid()
+    ax[1].grid()
+
     plt.show()
 
 

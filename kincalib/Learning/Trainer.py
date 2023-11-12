@@ -86,7 +86,9 @@ class Trainer:
             self.train_epoch_loss_list.append(train_loss)
 
             # Valid loss
+            self.net.eval()
             valid_loss = self.calculate_loss(self.valid_loader)
+            self.net.train()
             self.valid_epoch_loss_list.append(valid_loss)
 
             # Print epoch information

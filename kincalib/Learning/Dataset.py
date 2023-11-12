@@ -104,6 +104,12 @@ class Normalizer:
         with open(path, "w") as f:
             f.write(json_str)
 
+    @classmethod
+    def from_json(cls: Normalizer, path: Path) -> Normalizer:
+        with open(path, "r") as f:
+            state_dict = json.load(f)
+        return cls(xdata=None, state_dict=state_dict)
+
 
 if __name__ == "__main__":
     exp_root = []
