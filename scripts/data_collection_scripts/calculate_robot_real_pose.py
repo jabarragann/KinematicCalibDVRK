@@ -81,7 +81,7 @@ def analyze_robot_error():
         file_path=file_path, hand_eye_file=hand_eye_file
     )
 
-    experimental_data.save_to_record(output_path=exp_root)
+    experimental_data.filter_and_save_to_record(output_path=exp_root)
     plot_robot_error(experimental_data)
     plot_correction_offset(experimental_data)
 

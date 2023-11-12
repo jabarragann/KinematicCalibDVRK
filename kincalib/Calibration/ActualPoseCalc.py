@@ -52,7 +52,7 @@ class RobotActualPoseCalulator:
         error_data = pd.DataFrame(temp_dict)
         return error_data
 
-    def save_to_record(
+    def filter_and_save_to_record(
         self,
         output_path: Path,
         pos_error_threshold: float = 8.0,
@@ -79,12 +79,14 @@ class RobotActualPoseCalulator:
 
         measured_jp_rec = records.JointRecord("measured_jp", "measured_")
         actual_jp_rec = records.JointRecord("actual_jp", "actual_")
+        jp_offset_rec = records.JointRecord("jp_offset", "offset_")
         measured_cp_rec = records.CartesianRecord("measured_cp", "measured_")
         actual_cp_rec = records.CartesianRecord("actual_cp", "actual_")
         error_rec = records.ErrorRecord("pose_error", "error_")
         records_list += [
             measured_jp_rec,
             actual_jp_rec,
+            jp_offset_rec,
             measured_cp_rec,
             actual_cp_rec,
             error_rec,
@@ -97,12 +99,15 @@ class RobotActualPoseCalulator:
             if below_thresholds(error_metric):
                 measured_jp_rec.add_data(self.index_array[i], self.measured_jp[i])
                 actual_jp_rec.add_data(self.index_array[i], self.actual_jp[i])
+                jp_offset_rec.add_data(
+                    self.index_array[i], self.measured_jp[i] - self.actual_jp[i]
+                )
                 measured_cp_rec.add_data(self.index_array[i], self.T_RG[:, :, i])
                 actual_cp_rec.add_data(self.index_array[i], self.T_RG_actual[:, :, i])
                 error_rec.add_data(self.index_array[i], error_metric)
 
         saver = records.RecordCollectionCsvSaver(output_path)
-        saver.save(records_list, file_name="filtered_data.csv")
+        saver.save(records_list, file_name="filtered_dataset.csv")
 
     @classmethod
     def load_from_file(

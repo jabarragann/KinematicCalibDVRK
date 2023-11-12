@@ -36,6 +36,7 @@ class JointsDataset1(Dataset):
         joint_names = ["q1", "q2", "q3", "q4", "q5", "q6"]
         measured_cols = ["measured_" + joint_name for joint_name in joint_names]
         actual_cols = ["actual_" + joint_name for joint_name in joint_names]
+        offset_cols = ["offset_" + joint_name for joint_name in joint_names]
 
         X = []
         Y = []
@@ -44,8 +45,9 @@ class JointsDataset1(Dataset):
             df = pd.read_csv(p)
             measured_data = df.loc[:, measured_cols].to_numpy()
             actual_data = df.loc[:, actual_cols].to_numpy()
+            offset_data = df.loc[:, offset_cols].to_numpy()
             X.append(measured_data)
-            Y.append(measured_data - actual_data)
+            Y.append(offset_data)
 
         X = np.concatenate(X, axis=0)
         Y = np.concatenate(Y, axis=0)
@@ -114,10 +116,13 @@ class Normalizer:
 if __name__ == "__main__":
     exp_root = []
     exp_root.append(
-        "./data/experiments/data_collection1/08-11-2023-19-33-54/filtered_data.csv"
+        "./data/experiments/data_collection1/08-11-2023-19-23-55/filtered_dataset.csv"
     )
     exp_root.append(
-        "./data/experiments/data_collection1/08-11-2023-19-52-14/filtered_data.csv"
+        "./data/experiments/data_collection1/08-11-2023-19-33-54/filtered_dataset.csv"
+    )
+    exp_root.append(
+        "./data/experiments/data_collection1/08-11-2023-19-52-14/filtered_dataset.csv"
     )
     exp_root = [Path(p) for p in exp_root]
 
@@ -130,7 +135,6 @@ if __name__ == "__main__":
     x, y = train_data[0]
     log.info(f"number of inputs {x.shape}")
     log.info(f"number of outputs {y.shape}")
-
     log.info(f"x shape {x.shape}")
     log.info(f"y shape {y.shape}")
 
@@ -138,6 +142,13 @@ if __name__ == "__main__":
     log.info(f"mean and std before normalization")
     log.info(f"train x mean\n{x.mean(axis=0)}")
     log.info(f"train x std\n{x.std(axis=0)}")
+
+    log.info(f"Y statistics")
+    log.info(f"y mean {y.mean(axis=0)}")
+    log.info(f"y_std {y.std(axis=0)}")
+    log.info(f"y min {y.min(axis=0)}")
+    log.info(f"y max {y.max(axis=0)}")
+    print()
 
     x, y = train_data[:]
     log.info(f"mean and std after normalization")
