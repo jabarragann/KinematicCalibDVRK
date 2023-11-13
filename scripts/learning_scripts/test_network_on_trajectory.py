@@ -30,7 +30,9 @@ def plot_robot_error(measured_cp: np.ndarray, corrupted_actual_cp: np.ndarray):
     plt.show()
 
 
-def plot_correction_offset(experimental_data: RobotActualPoseCalulator):
+def plot_correction_offset(
+    experimental_data: RobotActualPoseCalulator, corrupted_actual_jp: np.ndarray
+):
     sub_params = dict(
         top=0.88,
         bottom=0.06,
@@ -45,11 +47,15 @@ def plot_correction_offset(experimental_data: RobotActualPoseCalulator):
     fig.subplots_adjust(**sub_params)
 
     correction_offset = experimental_data.measured_jp - experimental_data.actual_jp
+    nn_offset = experimental_data.measured_jp - corrupted_actual_jp
     for i in range(6):
         ax[i, 0].plot(experimental_data.measured_jp[:, i])
         ax[i, 0].set_title(f"q{i+1}")
-        ax[i, 1].plot(correction_offset[:, i])
+        ax[i, 1].plot(correction_offset[:, i], label="ground truth")
+        ax[i, 1].plot(nn_offset[:, i], label="predicted_offset")
         ax[i, 1].set_title(f"correction offset q{i+1}")
+    ax[0, 1].legend()
+    [a.grid() for a in ax.flatten()]
 
     plt.show()
 
@@ -118,7 +124,7 @@ def inject_errors(
     corrupted_actual_jp = noise_generator.batch_corrupt(actual_jp)
     corrupted_actual_cp = calculate_fk(corrupted_actual_jp)
 
-    return corrupted_actual_cp
+    return corrupted_actual_cp, corrupted_actual_jp
 
 
 def reduce_pose_error_with_nn():
@@ -131,7 +137,7 @@ def reduce_pose_error_with_nn():
     # # exp_root = "./data/experiments/data_collection1/08-11-2023-19-33-54"
     # exp_root = "./data/experiments/data_collection1/08-11-2023-19-52-14"
 
-    model_path = "./outputs_hydra/train_test_simple_net_20231112_012816_cuda" 
+    model_path = "./outputs_hydra/train_test_simple_net_20231112_191433" 
     # fmt:on
 
     exp_root = Path(exp_root)
@@ -140,10 +146,12 @@ def reduce_pose_error_with_nn():
     experimental_data = load_robot_pose_cal(exp_root)
     noise_generator = load_noise_generator(model_path)
 
-    corrupted_actual_cp = inject_errors(experimental_data, noise_generator)
+    corrupted_actual_cp, corrupted_actual_jp = inject_errors(
+        experimental_data, noise_generator
+    )
 
     plot_robot_error(experimental_data.T_RG, corrupted_actual_cp)
-    # # plot_correction_offset(experimental_data)
+    plot_correction_offset(experimental_data, corrupted_actual_jp)
 
 
 if __name__ == "__main__":
