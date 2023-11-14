@@ -53,19 +53,19 @@ def report_and_confirm(config_dict) -> str:
     help="Marker config file",
 )
 @click.option("--marker_name", type=str, default="dvrk_tip_frame")
-@click.option("--traj_type", type=click.Choice(["rosbag", "random", "soft"]), default="rosbag")
+@click.option("--traj_type", type=click.Choice(["rosbag", "random", "soft"]), default="soft")
 @click.option("--traj_size", type=int, default=50)
 @click.option("--rosbag_path", type=click.Path(exists=True, path_type=Path), default="./data/dvrk_recorded_motions/pitch_exp_traj_01_test_cropped.bag")
 @click.option("--description", type=str, default="")
-@click.option("--arm_type", type=click.Choice(["ambf","dvrk"]), default="ambf")
+@click.option("--arm_type", type=click.Choice(["ambf","dvrk"]), default="dvrk")
 @click.option(
     "--real/--sim",
     "use_real_sensor",
     is_flag=True,
-    default=False,
+    default=True,
     help="--real to use real atracsys sensor, --sim to use dummy sensor",
 )
-@click.option("--save_every", type=int, default=400, help="Send data to csv every n samples")
+@click.option("--save_every", type=int, default=800, help="Send data to csv every n samples")
 def main(
     marker_config, marker_name, traj_type, traj_size, rosbag_path, description, use_real_sensor, arm_type, save_every
 ):
@@ -121,6 +121,7 @@ def main(
         try:
             trajectory_player.replay_trajectory(execute_cb=True)
         finally:
+            log.info("Save remaining data ....")
             data_recorder.rec_collection.save_data()
 
 
