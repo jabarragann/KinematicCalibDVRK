@@ -132,6 +132,7 @@ class DataRecorder:
 
 @dataclass
 class DataReaderFromCSV:
+    """Read data into a df and use record_dict headers to split the data."""
     file_path: str
     record_dict: Dict[str, Record]
 
@@ -154,6 +155,14 @@ class DataReaderFromCSV:
         elif type(record) == JointRecord:
             self.data_dict[record.record_name] = self.df.loc[
                 :, record.headers
+            ].to_numpy()
+        elif type(record) == MarkerCartesianRecord:
+            self.data_dict[record.record_name] = self.process_cartesian_csv_data(
+                self.df.loc[:, record.headers[:6]].to_numpy()
+            )
+
+            self.data_dict["marker_reg_error"] = self.df.loc[
+                :, record.headers[:6]
             ].to_numpy()
         else:
             raise Exception(f"{type(record)} type not supported")
