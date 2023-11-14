@@ -3,8 +3,8 @@ from typing import Dict, List
 from kincalib.Record.DataRecorder import DataReaderFromCSV, DataRecorder
 from kincalib.Calibration.HandEyeCalibration import HandEyeBatchProcessing
 from kincalib.utils.Logger import Logger
-import json
 import numpy as np
+import click
 
 log = Logger(__name__).log
 
@@ -103,23 +103,18 @@ def save_hand_eye_to_json(
     manual_saving(path / "hand_eye_calib.json", data)
 
 
-def perform_hand_eye():
+@click.command()
+@click.option(
+    "--data_path", type=click.Path(exists=True, path_type=Path), required=True
+)
+def perform_hand_eye(data_path):
     record_dict = DataRecorder.create_records()
-    # file_path = "./data/experiments/repetabability_experiment_rosbag01/01-11-2023-20-24-30/record_001.csv"
-    # file_path = "./data/experiments/repetabability_experiment_rosbag01/01-11-2023-20-28-58/record_001.csv"
-    # file_path = "./data/experiments/repetabability_experiment_rosbag01/01-11-2023-20-33-24/record_001.csv"
 
-    # file_path = "./data/experiments/data_collection1/08-11-2023-19-23-55/combined_data.csv"
-    # file_path = "./data/experiments/data_collection1/08-11-2023-19-33-54/combined_data.csv"
-    file_path = (
-        "./data/experiments/data_collection1/08-11-2023-19-52-14/combined_data.csv"
-    )
+    data_path = Path(data_path)
+    assert data_path.exists(), "File does not exist"
+    log.info(f"Analyzing experiment {data_path.parent.name}")
 
-    file_path = Path(file_path)
-    assert file_path.exists(), "File does not exist"
-    log.info(f"Analyzing experiment {file_path.parent.name}")
-
-    data_dict = DataReaderFromCSV(file_path, record_dict).data_dict
+    data_dict = DataReaderFromCSV(data_path, record_dict).data_dict
 
     A_data = data_dict["measured_cp"]
     B_data = data_dict["marker_measured_cp"]
@@ -135,7 +130,7 @@ def perform_hand_eye():
     log.info(f"ErrorStats mean: {ErrorStats[0]} std: {ErrorStats[1]}")
 
     save_hand_eye_to_json(
-        file_path.parent, T_GM=X_est, T_RT=Y_est, mean=ErrorStats[0], std=ErrorStats[1]
+        data_path.parent, T_GM=X_est, T_RT=Y_est, mean=ErrorStats[0], std=ErrorStats[1]
     )
 
 
