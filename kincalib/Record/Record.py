@@ -164,7 +164,7 @@ class MarkerCartesianRecord(CartesianRecord):
         return [prefix + h for h in headers]
 
     def add_data(self, idx: int, data: MarkerPoseMeasurement) -> bool:
-        assert isinstance(data, MarkerPoseMeasurement), f"Data must be of type MarkerPoseMeasurement for {self.record_name}"
+        assert isinstance(data, MarkerPoseMeasurement) or data is None, f"Data must be of type MarkerPoseMeasurement for {self.record_name}"
 
         final_data = np.zeros(7)
         if data is None:

@@ -58,6 +58,7 @@ class FusionTrackAbstract(ABC):
 @dataclass
 class MarkerSubscriber:
     marker_name: str
+    debug: bool = False
 
     def __post_init__(self):
         self.marker_measurement: MarkerPoseMeasurement = None
@@ -69,24 +70,29 @@ class MarkerSubscriber:
         for topic in self.topics:
             self.subscribers.append(message_filters.Subscriber(topic[0], topic[1]))
 
-        ts = message_filters.ApproximateTimeSynchronizer(self.subscribers, queue_size=5, slop=0.05)
+        # allow_headerless needs to be set to true. Registration Error does not have header.
+        ts = message_filters.ApproximateTimeSynchronizer(self.subscribers, queue_size=5, slop=0.05, allow_headerless=True)
         ts.registerCallback(self.data_callback)
 
     def data_callback(self, *inputs_msg):
-        marker_pose = inputs_msg[0] 
+        marker_pose = pm.toMatrix(pm.fromMsg(inputs_msg[0].pose))  
         reg_error = inputs_msg[1].data
         self.marker_measurement = MarkerPoseMeasurement(pose=marker_pose, reg_error=reg_error)
+
+        if self.debug:
+            log.info("data received")
+            log.info(f"{self.marker_measurement}")
 
     def msg_to_marker_pose(self, msg:geometry_msgs.msg.PoseStamped)->np.ndarray:
         return pm.toMatrix(pm.fromMsg(msg.pose))
         
-    def get_data(self) -> np.ndarray:
-        data_to_return = self.marker_pose
-        self.marker_pose = None
+    def get_data(self) -> MarkerPoseMeasurement:
+        data_to_return = self.marker_measurement
+        self.marker_measurement = None
         return data_to_return
 
     def has_data(self) -> bool:
-        if self.marker_pose is not None:
+        if self.marker_measurement is not None:
             return True
         else:
             return False
@@ -125,6 +131,10 @@ class FusionTrack(FusionTrackAbstract):
         for name in self.marker_names:
             data[name] = self.subscribers[name].get_data()
         return data
+    
+    def clear_data(self)->None:
+        for s in self.subscribers.values(): 
+            s.clear_data()
 
 
 class FusionTrackDummy(FusionTrackAbstract):
@@ -151,7 +161,7 @@ class FusionTrackDummy(FusionTrackAbstract):
     "--real/--sim",
     "real_sensor",
     is_flag=True,
-    default=False,
+    default=True,
     help="real or simulated sensor",
 )
 @click.option(

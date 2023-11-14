@@ -44,6 +44,8 @@ List of atracsys topics
 /atracsys/dvrk_tip_frame/registration_error #Type: std_msgs/Float64
 ```
 
+**Errors in rostopics callback are not be printed in the terminal**
+
 **Robotics toolbox changes matplotlib figures**
 ```
 import roboticstoolbox
