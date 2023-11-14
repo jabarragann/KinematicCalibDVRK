@@ -27,6 +27,7 @@ class DataRecorder:
     """
     TODO: needs some thought if needs to be more generic.
     """
+
     marker_name: str
     robot_handle: psm
     ftk_handle: FusionTrackAbstract
@@ -37,32 +38,44 @@ class DataRecorder:
         self.index = None
 
         self.func_dict: Dict[str, Callable] = {}
-        self.records_dict: Dict[str, Record] = self.create_records() 
+        self.records_dict: Dict[str, Record] = self.create_records()
         # Optical tracker
         # self.marker_measured_cp = CartesianRecord("marker_measured_cp", "marker_")
-        self.func_dict[self.records_dict["marker_measured_cp"].record_name] = self.get_ftk_data 
+        self.func_dict[
+            self.records_dict["marker_measured_cp"].record_name
+        ] = self.get_ftk_data
 
         # Robot
         # self.measured_jp = JointRecord("measured_jp", "measured_")
-        self.func_dict[self.records_dict["measured_jp"].record_name] = self.robot_handle.measured_jp
+        self.func_dict[
+            self.records_dict["measured_jp"].record_name
+        ] = self.robot_handle.measured_jp
         # self.measured_cp = CartesianRecord("measured_cp", "measured_")
-        self.func_dict[self.records_dict["measured_cp"].record_name] = self.get_measured_cp_data
+        self.func_dict[
+            self.records_dict["measured_cp"].record_name
+        ] = self.get_measured_cp_data
 
         # self.setpoint_jp = JointRecord("setpoint_jp", "setpoint_")
-        self.func_dict[self.records_dict["setpoint_jp"].record_name] = self.robot_handle.setpoint_jp
+        self.func_dict[
+            self.records_dict["setpoint_jp"].record_name
+        ] = self.robot_handle.setpoint_jp
         # self.setpoint_cp = CartesianRecord("setpoint_cp", "setpoint_")
-        self.func_dict[self.records_dict["setpoint_cp"].record_name] = self.get_setpoint_cp_data
+        self.func_dict[
+            self.records_dict["setpoint_cp"].record_name
+        ] = self.get_setpoint_cp_data
 
         self.record_list = list(self.records_dict.values())
-        self.rec_collection = RecordCollection(self.record_list, data_saver=self.data_saver)
+        self.rec_collection = RecordCollection(
+            self.record_list, data_saver=self.data_saver
+        )
 
-    @classmethod 
-    def create_records(cls:DataRecorder)->Dict[str,Record]:
-        """ TODO: This method should be replace with an enum 
-        
-            class enum(Enum): 
-                marker_measured_cp = (CartesianRecord, "marker_measured_cp", "marker_") 
-                measured_jp = (JointRecord, "measured_jp", "measured_")
+    @classmethod
+    def create_records(cls: DataRecorder) -> Dict[str, Record]:
+        """TODO: This method should be replace with an enum
+
+        class enum(Enum):
+            marker_measured_cp = (CartesianRecord, "marker_measured_cp", "marker_")
+            measured_jp = (JointRecord, "measured_jp", "measured_")
         """
         # Optical tracker
         marker_measured_cp = MarkerCartesianRecord("marker_measured_cp", "marker_")
@@ -72,24 +85,26 @@ class DataRecorder:
         setpoint_jp = JointRecord("setpoint_jp", "setpoint_")
         setpoint_cp = CartesianRecord("setpoint_cp", "setpoint_")
 
-        record_dict = dict( 
-            marker_measured_cp = marker_measured_cp,
-            measured_jp = measured_jp,
-            measured_cp = measured_cp,
-            setpoint_jp = setpoint_jp,
-            setpoint_cp = setpoint_cp,
-         )
-        assert cls.does_record_names_match_dict_keys(record_dict), "Record names must match dict keys"
+        record_dict = dict(
+            marker_measured_cp=marker_measured_cp,
+            measured_jp=measured_jp,
+            measured_cp=measured_cp,
+            setpoint_jp=setpoint_jp,
+            setpoint_cp=setpoint_cp,
+        )
+        assert cls.does_record_names_match_dict_keys(
+            record_dict
+        ), "Record names must match dict keys"
         return record_dict
 
     @staticmethod
-    def does_record_names_match_dict_keys(record_dict:Dict[str,Record])->bool:
+    def does_record_names_match_dict_keys(record_dict: Dict[str, Record]) -> bool:
         for name, record in record_dict.items():
             if name != record.record_name:
                 return False
         return True
 
-    def get_ftk_data(self)->MarkerPoseMeasurement:
+    def get_ftk_data(self) -> MarkerPoseMeasurement:
         """
         Clear data and sleep before getting data to avoid sync issues.
         """
@@ -106,7 +121,9 @@ class DataRecorder:
     def collect_data(self, index):
         self.index = index + 1
         for rec_name, action_to_get_data in self.func_dict.items():
-            self.rec_collection.get_record(rec_name).add_data(index, action_to_get_data())
+            self.rec_collection.get_record(rec_name).add_data(
+                index, action_to_get_data()
+            )
 
         if self.index % self.save_every == 0:
             log.info(f"Dumping data to csv file...")
@@ -121,9 +138,9 @@ class DataReaderFromCSV:
     def __post_init__(self):
         self.df = pd.read_csv(self.file_path)
         self.df = self.df.dropna()
-        self.df = self.df.reset_index(drop=True)    
+        self.df = self.df.reset_index(drop=True)
 
-        self.data_dict:dict[str, np.ndarray] = {}
+        self.data_dict: dict[str, np.ndarray] = {}
         self.data_dict["traj_index"] = self.df.loc[:, "traj_index"].to_numpy()
 
         for record in self.record_dict.values():
@@ -131,22 +148,27 @@ class DataReaderFromCSV:
 
     def extract_data(self, record):
         if type(record) == CartesianRecord:
-            self.data_dict[record.record_name] = self.process_cartesian_csv_data(self.df.loc[:, record.headers].to_numpy()) 
+            self.data_dict[record.record_name] = self.process_cartesian_csv_data(
+                self.df.loc[:, record.headers].to_numpy()
+            )
         elif type(record) == JointRecord:
-            self.data_dict[record.record_name] = self.df.loc[:, record.headers].to_numpy()
+            self.data_dict[record.record_name] = self.df.loc[
+                :, record.headers
+            ].to_numpy()
         else:
-            raise Exception("Record type not supported")
+            raise Exception(f"{type(record)} type not supported")
 
-    def process_cartesian_csv_data(self, data:np.ndarray): 
-        pose_arr = np.zeros((4, 4, data.shape[0]) )
+    def process_cartesian_csv_data(self, data: np.ndarray):
+        pose_arr = np.zeros((4, 4, data.shape[0]))
         for i in range(data.shape[0]):
-            pose_arr[:4,:4,i] = np.identity(4)
-            pose_arr[:3,3,i] = data[i,:3]
+            pose_arr[:4, :4, i] = np.identity(4)
+            pose_arr[:3, 3, i] = data[i, :3]
 
-            rot = Rotation3D.from_rotvec(data[i,3:])
-            pose_arr[:3,:3,i] = rot.R
+            rot = Rotation3D.from_rotvec(data[i, 3:])
+            pose_arr[:3, :3, i] = rot.R
 
         return pose_arr
+
 
 def test_reader():
     record_dict = DataRecorder.create_records()
@@ -155,7 +177,8 @@ def test_reader():
     assert file_path.exists(), "File does not exist"
     data_dict = DataReaderFromCSV(file_path, record_dict).data_dict
     print(data_dict["measured_cp"].shape)
-    print(data_dict["measured_cp"][:,:,0])
+    print(data_dict["measured_cp"][:, :, 0])
+
 
 if __name__ == "__main__":
-    test_reader() 
+    test_reader()
