@@ -304,9 +304,9 @@ class SoftRandomJointTrajectory(RandomJointTrajectory):
 if __name__ == "__main__":
     rosbag_path = Path("data/dvrk_recorded_motions/pitch_exp_traj_01_test_cropped.bag")
     rosbag_handle = RosbagUtils(rosbag_path)
-    # trajectory = Trajectory.from_ros_bag(rosbag_handle, sampling_factor=80)
+    trajectory = Trajectory.from_ros_bag(rosbag_handle, sampling_factor=10)
     # trajectory = RandomJointTrajectory.generate_trajectory(50)
-    trajectory = SoftRandomJointTrajectory.generate_trajectory(100, samples_per_step=28)
+    # trajectory = SoftRandomJointTrajectory.generate_trajectory(100, samples_per_step=28)
 
     log.info(f"Initial pt {np.array(trajectory.setpoints[0].position)}")
     log.info(f"Starting ts {trajectory.setpoints[0].header.stamp.to_sec()}")
@@ -314,7 +314,7 @@ if __name__ == "__main__":
     trajectory.trajectory_report()
 
     arm_namespace = "PSM2"
-    arm_type = "ambf"
+    arm_type = "dvrk"
     # Robot handler has some issues with new crkt versions
     # arm = RobotHandler(device_namespace=arm_namespace, expected_interval=0.01)
     # arm.home_device()
