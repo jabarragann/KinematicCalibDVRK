@@ -8,6 +8,7 @@ from kincalib.utils import (
 import matplotlib.pyplot as plt
 import seaborn as sns
 from kincalib.Calibration import RobotActualPoseCalulator
+import click
 
 log = Logger(__name__).log
 
@@ -58,30 +59,36 @@ def plot_correction_offset(experimental_data: RobotActualPoseCalulator):
     plt.show()
 
 
-def analyze_robot_error():
-    # exp_root = "./data/experiments/repeatability_experiment_rosbag01/01-11-2023-20-24-30"
-    # exp_root = "./data/experiments/repeatability_experiment_rosbag01/01-11-2023-20-28-58"
-    exp_root = "./data/experiments/repeatability_experiment_rosbag01/01-11-2023-20-33-24"
+@click.command()
+@click.option(
+    "--data_file", type=click.Path(exists=True, path_type=Path), required=True
+)
+@click.option(
+    "--handeye_file", type=click.Path(exists=True, path_type=Path), required=True
+)
+@click.option(
+    "--out_dir",
+    type=click.Path(exists=True, path_type=Path),
+    default=None,
+    help="if it is not provided use data_file parent dir",
+)
+def analyze_robot_error(data_file, handeye_file, out_dir):
+    data_file = data_file
+    handeye_file = handeye_file
 
-    # exp_root = "./data/experiments/data_collection1/08-11-2023-19-23-55"
-    # exp_root = "./data/experiments/data_collection1/08-11-2023-19-33-54"
-    # exp_root = "./data/experiments/data_collection1/08-11-2023-19-52-14"
+    assert data_file.exists(), f"{data_file} does not exist"
+    assert handeye_file.exists(), "Hand eye file does not exist"
 
-    exp_root = Path(exp_root)
-
-    file_path = exp_root / "combined_data.csv"
-    hand_eye_file = exp_root / "hand_eye_calib.json"
-
-    assert file_path.exists(), "File does not exist"
-    assert hand_eye_file.exists(), "Hand eye file does not exist"
-
-    log.info(f"Analyzing experiment {file_path.parent.name}")
+    log.info(f"Analyzing experiment {data_file.parent.name}")
 
     experimental_data = RobotActualPoseCalulator.load_from_file(
-        file_path=file_path, hand_eye_file=hand_eye_file
+        file_path=data_file, hand_eye_file=handeye_file
     )
+    if out_dir is None:
+        experimental_data.filter_and_save_to_record(output_path=data_file.parent)
+    else:
+        experimental_data.filter_and_save_to_record(output_path=out_dir)
 
-    experimental_data.filter_and_save_to_record(output_path=exp_root)
     plot_robot_error(experimental_data)
     plot_correction_offset(experimental_data)
 
