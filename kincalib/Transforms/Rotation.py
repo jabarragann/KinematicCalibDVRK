@@ -82,6 +82,9 @@ class Rotation3D:
     def as_rotvec(self):
         return scipy_rotation.from_matrix(self.R).as_rotvec()
 
+    def as_quaternion(self):
+        return scipy_rotation.from_matrix(self.R).as_quat()
+
     @staticmethod
     def skew(x: np.ndarray):
         # fmt:off
@@ -143,7 +146,6 @@ class Rotation3D:
 
 
 if __name__ == "__main__":
-
     print("Identity")
     arr = np.eye(3, 3)
     print(Rotation3D.is_rotation(arr))
