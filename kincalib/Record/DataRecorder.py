@@ -133,13 +133,24 @@ class DataRecorder:
 @dataclass
 class DataReaderFromCSV:
     """Read data into a df and use record_dict headers to split the data."""
+
     file_path: str
     record_dict: Dict[str, Record]
+    reg_error_threshold: float = 0.0002  # Determined by looking at data
 
     def __post_init__(self):
         self.df = pd.read_csv(self.file_path)
         self.df = self.df.dropna()
         self.df = self.df.reset_index(drop=True)
+
+        # filter data with reg error
+        log.info(f"Input {self.df.shape[0]} samples")
+        filtered = self.df.loc[
+            self.df["marker_reg_error"] > self.reg_error_threshold, :
+        ]
+        self.df = self.df.loc[self.df["marker_reg_error"] < self.reg_error_threshold, :]
+        log.info(f"filtered {filtered.shape[0]} samples")
+        log.info(f"accepted {self.df.shape[0]} samples")
 
         self.data_dict: dict[str, np.ndarray] = {}
         self.data_dict["traj_index"] = self.df.loc[:, "traj_index"].to_numpy()
