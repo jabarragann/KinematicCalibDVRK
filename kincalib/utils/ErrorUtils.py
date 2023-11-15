@@ -21,19 +21,15 @@ def calculate_orientation_error(T_RG: np.ndarray, T_RG_actual: np.ndarray):
 
 
 def create_cartesian_error_lineplot(
-    position_error: np.ndarray, orientation_error: np.ndarray
+    position_error: np.ndarray, orientation_error: np.ndarray, pos_ax: plt.Axes, ori_ax: plt.Axes
 ):
-    fig, ax = plt.subplots(2, 1, sharex=True)
-    ax = np.expand_dims(ax, axis=0)
 
-    ax[0, 0].plot(position_error)
-    ax[0, 0].set_ylabel("Position error (mm)")
-    ax[0, 1].plot(orientation_error)
-    ax[0, 1].set_ylabel("Orientation error (deg)")
+    pos_ax.plot(position_error)
+    pos_ax.set_ylabel("Position error (mm)")
+    ori_ax.plot(orientation_error)
+    ori_ax.set_ylabel("Orientation error (deg)")
 
-    [a.grid() for a in ax.flatten()]
-
-    return fig, ax
+    [a.grid() for a in [pos_ax, ori_ax]]
 
 
 def create_cartesian_error_histogram(
