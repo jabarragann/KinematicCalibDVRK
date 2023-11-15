@@ -39,7 +39,7 @@ if __name__ == "__main__":
 
     train_data = JointsDataset1(path_lists=exp_root)
     normalizer = Normalizer(train_data.X)
-    train_data.set_normalizer(normalizer)
+    train_data.set_input_normalizer(normalizer)
 
     dataloader = DataLoader(train_data, batch_size=4, shuffle=True)
 
