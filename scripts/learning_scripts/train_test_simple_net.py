@@ -36,12 +36,17 @@ def load_data(cfg: ExperimentConfig) -> DatasetContainer:
     test_paths = [Path(p) for p in cfg.path_config.test_paths]
 
     train_dataset = JointsDataset1(train_paths)
-    normalizer = Normalizer(train_dataset.X)
-    normalizer.to_json(Path(cfg.output_path) / "normalizer.json")
-    train_dataset.set_normalizer(normalizer)
+    input_normalizer = Normalizer(train_dataset.X)
+    input_normalizer.to_json(Path(cfg.output_path) / "input_normalizer.json")
+    train_dataset.set_input_normalizer(input_normalizer)
+
+    output_normalizer = Normalizer(train_dataset.X)
+    output_normalizer.to_json(Path(cfg.output_path) / "output_normalizer.json")
+    train_dataset.set_output_normalizer(output_normalizer)
 
     test_dataset = JointsDataset1(test_paths)
-    test_dataset.set_normalizer(normalizer)
+    test_dataset.set_input_normalizer(input_normalizer)
+    test_dataset.set_output_normalizer(output_normalizer)
 
     train_dataloader = DataLoader(
         train_dataset, batch_size=cfg.train_config.batch_size, shuffle=True
