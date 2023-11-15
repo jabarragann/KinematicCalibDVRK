@@ -14,11 +14,25 @@ log = Logger(__name__).log
 
 
 def plot_robot_error(experimental_data: RobotActualPoseCalulator):
-    position_error = experimental_data.position_error
-    orientation_error = experimental_data.orientation_error
+    position_error = experimental_data.position_error_measured_actual
+    orientation_error = experimental_data.orientation_error_measured_actual
     error_data = experimental_data.convert_to_dataframe()
 
-    fig, axes = create_cartesian_error_lineplot(position_error, orientation_error)
+    fig, axes = plt.subplots(2, 2)
+    axes[0, 0].set_title("Error between measured and actual")
+    create_cartesian_error_lineplot(
+        experimental_data.position_error_measured_actual,
+        experimental_data.orientation_error_measured_actual,
+        axes[0, 0],
+        axes[1, 0],
+    )
+    axes[0, 1].set_title("Error between measured and setpoint")
+    create_cartesian_error_lineplot(
+        experimental_data.position_error_measured_setpoint,
+        experimental_data.orientation_error_measured_setpoint,
+        axes[0, 1],
+        axes[1, 1],
+    )
 
     # correlation plot
     fig, ax = plt.subplots(3, 2)
@@ -73,12 +87,6 @@ def plot_correction_offset(experimental_data: RobotActualPoseCalulator):
     help="if it is not provided use data_file parent dir",
 )
 def analyze_robot_error(data_file, handeye_file, out_dir):
-    data_file = data_file
-    handeye_file = handeye_file
-
-    assert data_file.exists(), f"{data_file} does not exist"
-    assert handeye_file.exists(), "Hand eye file does not exist"
-
     log.info(f"Analyzing experiment {data_file.parent.name}")
 
     experimental_data = RobotActualPoseCalulator.load_from_file(

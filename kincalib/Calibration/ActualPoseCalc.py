@@ -23,31 +23,38 @@ log = Logger(__name__).log
 class RobotActualPoseCalulator:
     index_array: np.ndarray
     measured_jp: np.ndarray
-    T_RG: np.ndarray
-    T_RG_actual: np.ndarray
+    measured_cp: np.ndarray
+    actual_cp: np.ndarray
+    setpoint_cp: np.ndarray
 
     def __post_init__(self):
         self.calculate_error_metrics()
         self.calculate_actual_jp()
 
     def calculate_error_metrics(self):
-        self.position_error = calculate_position_error(
-            T_RG=self.T_RG, T_RG_actual=self.T_RG_actual
+        self.position_error_measured_actual = calculate_position_error(
+            T_RG=self.measured_cp, T_RG_actual=self.actual_cp
         )
-        self.orientation_error = calculate_orientation_error(
-            T_RG=self.T_RG, T_RG_actual=self.T_RG_actual
+        self.orientation_error_measured_actual = calculate_orientation_error(
+            T_RG=self.measured_cp, T_RG_actual=self.actual_cp
+        )
+        self.position_error_measured_setpoint = calculate_position_error(
+            T_RG=self.measured_cp, T_RG_actual=self.setpoint_cp
+        )
+        self.orientation_error_measured_setpoint = calculate_orientation_error(
+            T_RG=self.measured_cp, T_RG_actual=self.setpoint_cp
         )
 
     def calculate_actual_jp(self):
-        self.actual_jp = kincalib.calculate_ik(self.T_RG_actual)
+        self.actual_jp = kincalib.calculate_ik(self.actual_cp)
 
     def convert_to_dataframe(self) -> pd.DataFrame:
         temp_dict = dict(
             q4=self.measured_jp[:, 3],
             q5=self.measured_jp[:, 4],
             q6=self.measured_jp[:, 5],
-            pos_error=self.position_error,
-            orientation_error=self.orientation_error,
+            pos_error=self.position_error_measured_actual,
+            orientation_error=self.orientation_error_measured_actual,
         )
 
         error_data = pd.DataFrame(temp_dict)
@@ -95,7 +102,8 @@ class RobotActualPoseCalulator:
 
         for i in range(self.index_array.shape[0]):
             error_metric = records.PoseErrorMetric(
-                self.position_error[i], self.orientation_error[i]
+                self.position_error_measured_actual[i],
+                self.orientation_error_measured_actual[i],
             )
             if below_thresholds(error_metric):
                 measured_jp_rec.add_data(self.index_array[i], self.measured_jp[i])
@@ -103,8 +111,8 @@ class RobotActualPoseCalulator:
                 jp_offset_rec.add_data(
                     self.index_array[i], self.measured_jp[i] - self.actual_jp[i]
                 )
-                measured_cp_rec.add_data(self.index_array[i], self.T_RG[:, :, i])
-                actual_cp_rec.add_data(self.index_array[i], self.T_RG_actual[:, :, i])
+                measured_cp_rec.add_data(self.index_array[i], self.measured_cp[:, :, i])
+                actual_cp_rec.add_data(self.index_array[i], self.actual_cp[:, :, i])
                 error_rec.add_data(self.index_array[i], error_metric)
 
         saver = records.RecordCollectionCsvSaver(output_path)
@@ -121,6 +129,7 @@ class RobotActualPoseCalulator:
         T_RG = data_dict["measured_cp"]
         T_TM = data_dict["marker_measured_cp"]
         measured_jp = data_dict["measured_jp"]
+        setpoint_cp = data_dict["setpoint_cp"]
 
         with open(hand_eye_file, "r") as file:
             hand_eye_data = json.load(file)
@@ -131,11 +140,13 @@ class RobotActualPoseCalulator:
 
         T_RG_actual = cls.calculate_robot_actual_cp(T_RT=T_RT, T_TM=T_TM, T_MG=T_MG)
 
+        cls: RobotActualPoseCalulator
         return cls(
             index_array=traj_index,
             measured_jp=measured_jp,
-            T_RG=T_RG,
-            T_RG_actual=T_RG_actual,
+            measured_cp=T_RG,
+            actual_cp=T_RG_actual,
+            setpoint_cp=setpoint_cp,
         )
 
     @classmethod
