@@ -24,7 +24,8 @@ class JointsDataset1(Dataset):
     """
 
     path_lists: List[Path]
-    normalizer: Normalizer = None
+    input_normalizer: Normalizer = None
+    output_normalizer: Normalizer = None
 
     def __post_init__(self) -> None:
         super().__init__()
@@ -36,7 +37,7 @@ class JointsDataset1(Dataset):
         joint_names = ["q1", "q2", "q3", "q4", "q5", "q6"]
         measured_cols = ["measured_" + joint_name for joint_name in joint_names]
         actual_cols = ["actual_" + joint_name for joint_name in joint_names]
-        offset_cols = ["offset_" + joint_name for joint_name in joint_names]
+        setpoint_cols = ["setpoint_" + j for j in joint_names]
 
         X = []
         Y = []
@@ -45,7 +46,8 @@ class JointsDataset1(Dataset):
             df = pd.read_csv(p)
             measured_data = df.loc[:, measured_cols].to_numpy()
             actual_data = df.loc[:, actual_cols].to_numpy()
-            offset_data = df.loc[:, offset_cols].to_numpy()
+            setpoint_data = df.loc[:, setpoint_cols].to_numpy()
+            offset_data = actual_data - measured_data
             X.append(measured_data)
             Y.append(offset_data)
 
@@ -54,18 +56,23 @@ class JointsDataset1(Dataset):
 
         return X, Y
 
-    def set_normalizer(self, normalizer: Normalizer):
-        self.normalizer = normalizer
+    def set_input_normalizer(self, normalizer: Normalizer):
+        self.input_normalizer = normalizer
+
+    def set_output_normalizer(self, normalizer: Normalizer):
+        self.output_normalizer = normalizer
 
     def __len__(self):
         return self.X.shape[0]
 
     def __getitem__(self, idx, normalize_input=True):
         if normalize_input:
-            if self.normalizer is None:
-                raise ValueError("normalizer cannot be None")
-            x_norm = self.normalizer(self.X[idx])
-            return x_norm, self.Y[idx]
+            if self.input_normalizer is None or self.output_normalizer is None:
+                raise ValueError("normalizers cannot be None")
+
+            x_norm = self.input_normalizer(self.X[idx])
+            y_norm = self.output_normalizer(self.Y[idx])
+            return x_norm, y_norm
 
         else:
             return self.X[idx], self.Y[idx]
@@ -116,19 +123,15 @@ class Normalizer:
 if __name__ == "__main__":
     exp_root = []
     exp_root.append(
-        "./data/experiments/data_collection1/08-11-2023-19-23-55/filtered_dataset.csv"
-    )
-    exp_root.append(
-        "./data/experiments/data_collection1/08-11-2023-19-33-54/filtered_dataset.csv"
-    )
-    exp_root.append(
-        "./data/experiments/data_collection1/08-11-2023-19-52-14/filtered_dataset.csv"
+        "./data/experiments/data_collection2_updated_collection_scripts/13-11-2023-20-33-49/filtered_dataset.csv"
     )
     exp_root = [Path(p) for p in exp_root]
 
     train_data = JointsDataset1(path_lists=exp_root)
-    normalizer = Normalizer(train_data.X)
-    train_data.set_normalizer(normalizer)
+    input_normalizer = Normalizer(train_data.X)
+    output_normalizer = Normalizer(train_data.Y)
+    train_data.set_input_normalizer(input_normalizer)
+    train_data.set_output_normalizer(output_normalizer)
 
     log.info(f"Training size {len(train_data)}")
 
@@ -154,3 +157,5 @@ if __name__ == "__main__":
     log.info(f"mean and std after normalization")
     log.info(f"train x mean\n{x.mean(axis=0)}")
     log.info(f"train x std\n{x.std(axis=0)}")
+    log.info(f"y mean {y.mean(axis=0)}")
+    log.info(f"y_std {y.std(axis=0)}")
