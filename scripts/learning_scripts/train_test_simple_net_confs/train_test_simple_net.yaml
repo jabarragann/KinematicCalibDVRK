@@ -14,8 +14,8 @@ global_device: "cuda"
 
 train_config:
   batch_size: 32
-  epochs: 100
-  lr: 0.00094843454
+  epochs: 150
+  lr: 0.0008
   log_interval: 1
 
 actions:

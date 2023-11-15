@@ -2,11 +2,12 @@
 workspace: "/home/juan1995/research_juan/accelnet_grant/dvrk_kinematic_error_models"
 
 train_paths:
-  - ${..workspace}/data/experiments/data_collection1/08-11-2023-19-33-54/filtered_dataset.csv
-  - ${..workspace}/data/experiments/data_collection1/08-11-2023-19-52-14/filtered_dataset.csv
+  - ${..workspace}/data/experiments/data_collection3/combined/dataset1.csv
+  - ${..workspace}/data/experiments/data_collection3/combined/dataset3.csv
+  - ${..workspace}/data/experiments/data_collection3/combined/dataset4.csv
 
 test_paths:
-  - "${..workspace}/data/experiments/data_collection1/08-11-2023-19-23-55/filtered_dataset.csv"
+  - "${..workspace}/data/experiments/data_collection3/combined/dataset2.csv"
 # # dataset paths
 # train_data_path: "${.data_dir}/pilotdata_01_train"
 # test_data_path: "${.data_dir}/pilotdata_02_test"
