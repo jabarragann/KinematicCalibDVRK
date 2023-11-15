@@ -44,7 +44,7 @@ def plot_robot_error(experimental_data: RobotActualPoseCalulator):
     sns.scatterplot(x="q5", y="orientation_error", data=error_data, ax=ax[1, 1])
     sns.scatterplot(x="q6", y="orientation_error", data=error_data, ax=ax[2, 1])
 
-    fig, axes = create_cartesian_error_histogram(position_error, orientation_error)
+    create_cartesian_error_histogram(position_error, orientation_error, bins=30)
 
     plt.show()
 

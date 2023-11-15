@@ -21,9 +21,11 @@ def calculate_orientation_error(T_RG: np.ndarray, T_RG_actual: np.ndarray):
 
 
 def create_cartesian_error_lineplot(
-    position_error: np.ndarray, orientation_error: np.ndarray, pos_ax: plt.Axes, ori_ax: plt.Axes
+    position_error: np.ndarray,
+    orientation_error: np.ndarray,
+    pos_ax: plt.Axes,
+    ori_ax: plt.Axes,
 ):
-
     pos_ax.plot(position_error)
     pos_ax.set_ylabel("Position error (mm)")
     ori_ax.plot(orientation_error)
@@ -33,23 +35,32 @@ def create_cartesian_error_lineplot(
 
 
 def create_cartesian_error_histogram(
-    position_eror: np.ndarray, orientation_error: np.ndarray
+    pos_error: np.ndarray,
+    ori_error: np.ndarray,
+    stat="proportion",
+    bins=50,
 ):
-    data_dict = dict(pos_error=position_eror, orientation_error=orientation_error)
+    data_dict = dict(pos_error=pos_error, orientation_error=ori_error)
     error_data = pd.DataFrame(data_dict)
 
-    fig, ax = plt.subplots(2, 2)
+    fig, axes = plt.subplots(2, 2)
     fig.suptitle(f"Error distribution (N={error_data.shape[0]})")
-    # ax = np.expand_dims(ax, axis=0)
-    stat = "proportion"
-    sns.histplot(data=error_data, x="pos_error", ax=ax[0, 0], stat=stat, kde=True)
+
     sns.histplot(
-        data=error_data, x="orientation_error", ax=ax[0, 1], stat=stat, kde=True
+        data=error_data, x="pos_error", ax=axes[0, 0], stat=stat, kde=True, bins=bins
+    )
+    sns.histplot(
+        data=error_data,
+        x="orientation_error",
+        ax=axes[0, 1],
+        stat=stat,
+        kde=True,
+        bins=bins,
     )
     sns.histplot(
         data=error_data,
         x="pos_error",
-        ax=ax[1, 0],
+        ax=axes[1, 0],
         stat=stat,
         kde=True,
         cumulative=True,
@@ -57,10 +68,8 @@ def create_cartesian_error_histogram(
     sns.histplot(
         data=error_data,
         x="orientation_error",
-        ax=ax[1, 1],
+        ax=axes[1, 1],
         stat=stat,
         kde=True,
         cumulative=True,
     )
-
-    return fig, ax
