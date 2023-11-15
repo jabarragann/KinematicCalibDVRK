@@ -48,6 +48,9 @@ def load_data(cfg: ExperimentConfig) -> DatasetContainer:
     test_dataset.set_input_normalizer(input_normalizer)
     test_dataset.set_output_normalizer(output_normalizer)
 
+    log.info(f"Train dataset size: {len(train_dataset)}")
+    log.info(f"Test dataset size: {len(test_dataset)}")
+
     train_dataloader = DataLoader(
         train_dataset, batch_size=cfg.train_config.batch_size, shuffle=True
     )
