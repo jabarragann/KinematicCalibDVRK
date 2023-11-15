@@ -86,16 +86,19 @@ def plot_correction_offset(experimental_data: RobotActualPoseCalulator):
     default=None,
     help="if it is not provided use data_file parent dir",
 )
-def analyze_robot_error(data_file, handeye_file, out_dir):
+@click.option("--out_name", type=str, default="filtered_dataset.csv")
+def analyze_robot_error(data_file, handeye_file, out_dir, out_name):
     log.info(f"Analyzing experiment {data_file.parent.name}")
 
     experimental_data = RobotActualPoseCalulator.load_from_file(
         file_path=data_file, hand_eye_file=handeye_file
     )
     if out_dir is None:
-        experimental_data.filter_and_save_to_record(output_path=data_file.parent)
+        experimental_data.filter_and_save_to_record(
+            output_path=data_file.parent / out_name
+        )
     else:
-        experimental_data.filter_and_save_to_record(output_path=out_dir)
+        experimental_data.filter_and_save_to_record(output_path=out_dir / out_name)
 
     plot_robot_error(experimental_data)
     plot_correction_offset(experimental_data)

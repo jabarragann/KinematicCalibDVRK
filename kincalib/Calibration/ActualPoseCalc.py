@@ -116,8 +116,8 @@ class RobotActualPoseCalulator:
                 actual_cp_rec.add_data(self.index_array[i], self.actual_cp[:, :, i])
                 error_rec.add_data(self.index_array[i], error_metric)
 
-        saver = records.RecordCollectionCsvSaver(output_path)
-        saver.save(records_list, file_name="filtered_dataset.csv")
+        saver = records.RecordCollectionCsvSaver(output_path.parent)
+        saver.save(records_list, file_name=output_path.name)
 
     @classmethod
     def load_from_file(
