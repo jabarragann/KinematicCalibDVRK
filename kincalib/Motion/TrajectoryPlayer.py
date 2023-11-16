@@ -231,8 +231,8 @@ class RandomJointTrajectory(Trajectory):
         q2_range = np.array([-0.49, 0.47])
         q3_range = np.array([0.09, 0.20])
         q4_range = np.array([-1.0, 0.3])
-        q5_range = np.array([-1.34, 1.34])
-        q6_range = np.array([-1.34, 1.34])
+        q5_range = np.array([-1.2, 1.2])
+        q6_range = np.array([-1.2, 1.2])
 
     @staticmethod
     def generate_random_joint():
@@ -304,9 +304,9 @@ class SoftRandomJointTrajectory(RandomJointTrajectory):
 if __name__ == "__main__":
     rosbag_path = Path("data/dvrk_recorded_motions/pitch_exp_traj_01_test_cropped.bag")
     rosbag_handle = RosbagUtils(rosbag_path)
-    trajectory = Trajectory.from_ros_bag(rosbag_handle, sampling_factor=10)
+    # trajectory = Trajectory.from_ros_bag(rosbag_handle, sampling_factor=10)
     # trajectory = RandomJointTrajectory.generate_trajectory(50)
-    # trajectory = SoftRandomJointTrajectory.generate_trajectory(100, samples_per_step=28)
+    trajectory = SoftRandomJointTrajectory.generate_trajectory(100, samples_per_step=28)
 
     log.info(f"Initial pt {np.array(trajectory.setpoints[0].position)}")
     log.info(f"Starting ts {trajectory.setpoints[0].header.stamp.to_sec()}")
