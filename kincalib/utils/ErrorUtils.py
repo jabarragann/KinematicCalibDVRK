@@ -35,41 +35,62 @@ def create_cartesian_error_lineplot(
 
 
 def create_cartesian_error_histogram(
-    pos_error: np.ndarray,
-    ori_error: np.ndarray,
+    pos_error_setpoint_measured: np.ndarray,
+    ori_error_setpoint_measured: np.ndarray,
+    pos_error_measured_actual: np.ndarray,
+    ori_error_measured_actual: np.ndarray,
     stat="proportion",
     bins=50,
 ):
-    data_dict = dict(pos_error=pos_error, orientation_error=ori_error)
+    data_dict = dict(
+        pos_error_sm=pos_error_setpoint_measured,
+        ori_error_sm=ori_error_setpoint_measured,
+        pos_error_ma=pos_error_measured_actual,
+        ori_error_ma=ori_error_measured_actual,
+    )
     error_data = pd.DataFrame(data_dict)
 
-    fig, axes = plt.subplots(2, 2)
+    sub_params = dict(
+        top=0.88, bottom=0.11, left=0.06, right=0.96, hspace=0.27, wspace=0.29
+    )
+    figsize = (13.66, 5.70)
+    fig, axes = plt.subplots(2, 4, figsize=figsize)
+    fig.subplots_adjust(**sub_params)
+
     fig.suptitle(f"Error distribution (N={error_data.shape[0]})")
 
+    # fmt: off
+
+    ## setpoint vs measured
+    title = axes[0, 0 ].set_title("Setpoint vs Measured")
+    title.set_position([axes[0, 0].get_position().x0+1.02, axes[0, 0].get_position().y1 + 0.02])
     sns.histplot(
-        data=error_data, x="pos_error", ax=axes[0, 0], stat=stat, kde=True, bins=bins
+        data=error_data, x="pos_error_sm", ax=axes[0, 0 ], stat=stat, kde=True, bins=bins,
     )
     sns.histplot(
-        data=error_data,
-        x="orientation_error",
-        ax=axes[0, 1],
-        stat=stat,
-        kde=True,
-        bins=bins,
+        data=error_data, x="ori_error_sm", ax=axes[0, 1 ], stat=stat, kde=True, bins=bins,
     )
     sns.histplot(
-        data=error_data,
-        x="pos_error",
-        ax=axes[1, 0],
-        stat=stat,
-        kde=True,
-        cumulative=True,
+        data=error_data, x="pos_error_sm", ax=axes[1, 0 ], stat=stat, kde=True, cumulative=True, bins=bins
     )
     sns.histplot(
-        data=error_data,
-        x="orientation_error",
-        ax=axes[1, 1],
-        stat=stat,
-        kde=True,
-        cumulative=True,
+         data=error_data, x="ori_error_sm", ax=axes[1, 1 ], stat=stat, kde=True, cumulative=True, bins=bins
     )
+
+    ## measured vs actual
+    title = axes[0, 0 + 2].set_title("Measured vs actual")
+    title.set_position([axes[0, 0 + 2].get_position().x0+0.62, axes[0, 0 + 2].get_position().y1 + 0.02])
+    sns.histplot(
+        data=error_data, x="pos_error_ma", ax=axes[0, 0 + 2], stat=stat, kde=True, bins=bins,
+    )
+    sns.histplot(
+        data=error_data, x="ori_error_ma", ax=axes[0, 1 + 2], stat=stat, kde=True, bins=bins,
+    )
+    sns.histplot(
+        data=error_data, x="pos_error_ma", ax=axes[1, 0 + 2], stat=stat, kde=True, cumulative=True, bins=bins
+    )
+    sns.histplot(
+         data=error_data, x="ori_error_ma", ax=axes[1, 1 + 2], stat=stat, kde=True, cumulative=True, bins=bins
+    )
+    # fmt: on
+    plt.show()
