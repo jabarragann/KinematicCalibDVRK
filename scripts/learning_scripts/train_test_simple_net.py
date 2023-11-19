@@ -12,6 +12,8 @@ import hydra
 from kincalib.Learning.Dataset import JointsDataset1, Normalizer
 from torch.utils.data import DataLoader
 
+# Hack to add structured configs to python path - If there is any change on the
+# directory name or python file name, this will break
 struct_config = Path(__file__).parent / (Path(__file__).with_suffix("").name + "_confs")
 sys.path.append(str(struct_config))
 from train_test_simple_net_confs.structured_confs import (
