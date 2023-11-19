@@ -1,4 +1,5 @@
 from __future__ import annotations
+import json
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -35,18 +36,31 @@ def load_data(cfg: ExperimentConfig) -> DatasetContainer:
     train_paths = [Path(p) for p in cfg.path_config.train_paths]
     test_paths = [Path(p) for p in cfg.path_config.test_paths]
 
-    train_dataset = JointsDataset1(train_paths)
+    train_dataset = JointsDataset1(train_paths, mode=cfg.dataset_type)
+
+    # Create input output normalizers
     input_normalizer = Normalizer(train_dataset.X)
     input_normalizer.to_json(Path(cfg.output_path) / "input_normalizer.json")
     train_dataset.set_input_normalizer(input_normalizer)
 
-    output_normalizer = Normalizer(train_dataset.X)
+    output_normalizer = Normalizer(train_dataset.Y)
     output_normalizer.to_json(Path(cfg.output_path) / "output_normalizer.json")
     train_dataset.set_output_normalizer(output_normalizer)
 
-    test_dataset = JointsDataset1(test_paths)
+    test_dataset = JointsDataset1(test_paths, mode=cfg.dataset_type)
     test_dataset.set_input_normalizer(input_normalizer)
     test_dataset.set_output_normalizer(output_normalizer)
+
+    with open(Path(cfg.output_path) / "dataset_info.json", "w") as file:
+        json.dump(
+            {
+                "dataset_type": cfg.dataset_type,
+                "train_size": len(train_dataset),
+                "test_size": len(test_dataset),
+            },
+            file,
+            indent=4,
+        )
 
     log.info(f"Train dataset size: {len(train_dataset)}")
     log.info(f"Test dataset size: {len(test_dataset)}")

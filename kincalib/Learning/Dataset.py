@@ -17,21 +17,37 @@ np.set_printoptions(precision=4, suppress=True, sign=" ")
 class JointsDataset1(Dataset):
     """
     Input: actual_jp.
-    Output: measured_jp - actual_jp
+    Output: actual_jp - measured_jp
 
-    such that actual_jp + output = measured_jp
+    such that measured_jp + output = actual_jp
+
+    parameters
+    ----------
+
+    path_lists: List[Path]
+        list of paths to csv files containing the data
+    mode: str
+        either 'setpoint-measured' or 'measured-actual'
 
     """
 
     path_lists: List[Path]
+    mode: str
     input_normalizer: Normalizer = None
     output_normalizer: Normalizer = None
 
     def __post_init__(self) -> None:
         super().__init__()
+        self.validate_mode()
         self.X, self.Y = self.read_files(self.path_lists)
         self.X = torch.tensor(self.X.astype(np.float32))
         self.Y = torch.tensor(self.Y.astype(np.float32))
+
+    def validate_mode(self):
+        assert self.mode in [
+            "measured-setpoint",
+            "actual-measured",
+        ], f"mode {self.mode} not supported"
 
     def read_files(self, path_list: List[Path]):
         joint_names = ["q1", "q2", "q3", "q4", "q5", "q6"]
@@ -47,9 +63,13 @@ class JointsDataset1(Dataset):
             measured_data = df.loc[:, measured_cols].to_numpy()
             actual_data = df.loc[:, actual_cols].to_numpy()
             setpoint_data = df.loc[:, setpoint_cols].to_numpy()
-            offset_data = actual_data - measured_data
-            X.append(measured_data)
-            Y.append(offset_data)
+
+            if self.mode == "measured-setpoint":
+                X.append(setpoint_data)
+                Y.append(measured_data - setpoint_data)
+            elif self.mode == "actual-measured":
+                X.append(measured_data)
+                Y.append(actual_data - measured_data)
 
         X = np.concatenate(X, axis=0)
         Y = np.concatenate(Y, axis=0)
@@ -127,7 +147,7 @@ if __name__ == "__main__":
     )
     exp_root = [Path(p) for p in exp_root]
 
-    train_data = JointsDataset1(path_lists=exp_root)
+    train_data = JointsDataset1(path_lists=exp_root, mode="measured-setpoint")
     input_normalizer = Normalizer(train_data.X)
     output_normalizer = Normalizer(train_data.Y)
     train_data.set_input_normalizer(input_normalizer)

@@ -1,6 +1,8 @@
 from __future__ import annotations
 from dataclasses import dataclass
+import json
 from pathlib import Path
+from typing import Any, Dict, Tuple
 import pandas as pd
 
 import torch
@@ -59,17 +61,37 @@ def plot_histograms(
         bins=bins,
         hue="label",
     )
- 
 
 
-def plot_robot_error(
-    measured_cp: np.ndarray, actual_cp: np.ndarray, corrupted_measured_cp: np.ndarray
+def plot_cartesian_errors(
+    poses1: np.ndarray,
+    poses2: np.ndarray,
+    poses2_approximated: np.ndarray,
+    poses1_name: str,
+    poses2_name: str,
 ):
-    position_error1 = calculate_position_error(measured_cp, actual_cp)
-    orientation_error1 = calculate_orientation_error(measured_cp, actual_cp)
+    """Plots the cartesian error between two sets of poses Poses1 and poses2
+    are ground truth poses from measurements.  Poses2_approximated are
+    calculated from poses1 using the neural network and should approximate
+    poses2. Only two different settings are considered: 1) poses1 = setpoint_cp,
+    poses2 = measured_cp, and 2) poses1 = measured_cp, poses2 = actual_cp
 
-    position_error2 = calculate_position_error(corrupted_measured_cp, actual_cp)
-    orientation_error2 = calculate_orientation_error(corrupted_measured_cp, actual_cp)
+    parameters
+    ----------
+
+    poses1: np.ndarray
+        Ground truth poses from measurements
+    poses2: np.ndarray
+        Ground truth poses from measurements
+    poses2_approximated: np.ndarray
+        Approximated poses from poses1 using the neural network
+
+    """
+    position_error1 = calculate_position_error(poses1, poses2)
+    orientation_error1 = calculate_orientation_error(poses1, poses2)
+
+    position_error2 = calculate_position_error(poses2_approximated, poses2)
+    orientation_error2 = calculate_orientation_error(poses2_approximated, poses2)
 
     fig, axes = plt.subplots(2, 2)
     axes[0, 0].set_title("Error between measured and actual")
@@ -84,35 +106,32 @@ def plot_robot_error(
     plot_histograms(
         position_error1,
         orientation_error1,
-        "measured-actual",
+        f"{poses2_name}-{poses1_name}",
         position_error2,
         orientation_error2,
-        "corrupted-actual",
+        f"{poses2_name}-{poses2_name}_approx",
     )
 
     plt.show()
 
 
 def plot_correction_offset(
-    experimental_data: RobotActualPoseCalulator, corrupted_measured_jp: np.ndarray
+    jp1: np.ndarray, jp2: np.ndarray, jp2_approximate: np.ndarray
 ):
     sub_params = dict(
-        top=0.88,
-        bottom=0.06,
-        left=0.07,
-        right=0.95,
-        hspace=0.62,
-        wspace=0.31,
+        top=0.88, bottom=0.06, left=0.07, right=0.95, hspace=0.62, wspace=0.31
     )
     figsize = (7.56, 5.99)
 
     fig, ax = plt.subplots(6, 2, sharex=True, figsize=figsize)
     fig.subplots_adjust(**sub_params)
 
-    correction_offset = experimental_data.actual_jp - experimental_data.measured_jp
-    nn_offset = corrupted_measured_jp - experimental_data.measured_jp
+    correction_offset = jp2 - jp1
+
+    # jp2_approx = jp1 + nn_offset = jp1 + (jp2 - jp1) = jp2
+    nn_offset = jp2_approximate - jp1
     for i in range(6):
-        ax[i, 0].plot(experimental_data.measured_jp[:, i])
+        ax[i, 0].plot(jp1[:, i])
         ax[i, 0].set_title(f"q{i+1}")
         ax[i, 1].plot(correction_offset[:, i], label="ground truth")
         ax[i, 1].plot(nn_offset[:, i], label="predicted_offset")
@@ -198,40 +217,71 @@ def load_noise_generator(root: Path) -> NetworkNoiseGenerator:
 
 
 def inject_errors(
-    exp_data: RobotActualPoseCalulator, noise_generator: NetworkNoiseGenerator
-):
-    measured_jp = exp_data.measured_jp
-    corrupted_measured_jp = noise_generator.batch_corrupt(measured_jp)
-    corrupted_measured_cp = calculate_fk(corrupted_measured_jp)
+    poses1_jp, noise_generator: NetworkNoiseGenerator
+) -> Tuple[np.ndarray, np.ndarray]:
+    poses2_jp_approximate = noise_generator.batch_corrupt(poses1_jp)
+    poses2_cp_approximate = calculate_fk(poses2_jp_approximate)
 
-    return corrupted_measured_cp, corrupted_measured_jp
+    return poses2_cp_approximate, poses2_jp_approximate
+
+
+def load_dataset_config(model_path: Path) -> Dict[str, Any]:
+    dataset_info_path = model_path / "dataset_info.json"
+    assert (
+        dataset_info_path.exists()
+    ), f"Dataset info path {dataset_info_path} does not exist"
+    with open(dataset_info_path, "r") as file:
+        cfg_dict = json.load(file)
+
+    return cfg_dict
 
 
 def reduce_pose_error_with_nn():
     # fmt:off
-    test_data_path = "./data/experiments/data_collection3/combined/record_001_3.csv"
+    # test_data_path = "./data/experiments/data_collection3/combined/record_001_2.csv"
+    test_data_path = "./data/experiments/data_collection3/combined/bag1_traj_1.csv"
     hand_eye_path = "./data/experiments/data_collection3/combined/hand_eye_calib.json"
 
-    model_path = "./outputs_hydra/train_test_simple_net_20231114_223751" 
+    model_path = "./outputs_hydra/train_test_simple_net_20231118_214536" # measured-setpoint
+    # model_path = "./outputs_hydra/train_test_simple_net_20231118_214647" # actual-measured
     # fmt:on
 
     test_data_path = Path(test_data_path)
     hand_eye_path = Path(hand_eye_path)
     model_path = Path(model_path)
 
+    cfg_dict = load_dataset_config(model_path)
+    dataset_type = cfg_dict["dataset_type"]
+    log.info(f"Loading a model with dataset type: {dataset_type}")
+
     experimental_data = load_robot_pose_cal(test_data_path, hand_eye_path)
     noise_generator = load_noise_generator(model_path)
 
-    corrupted_measured_cp, corrupted_measured_jp = inject_errors(
-        experimental_data, noise_generator
+    if dataset_type == "measured-setpoint":
+        poses1_cp = experimental_data.setpoint_cp
+        poses1_jp = experimental_data.setpoint_jp
+        poses1_name = "setpoint"
+        poses2_cp = experimental_data.measured_cp
+        poses2_jp = experimental_data.measured_jp
+        poses2_name = "measured"
+    elif dataset_type == "actual-measured":
+        poses1_cp = experimental_data.measured_cp
+        poses1_jp = experimental_data.measured_jp
+        poses1_name = "measured"
+        poses2_cp = experimental_data.actual_cp
+        poses2_jp = experimental_data.actual_jp
+        poses2_name = "actual"
+    else:
+        raise ValueError(f"Unknown dataset type {dataset_type}")
+
+    poses2_cp_approximate, poses2_jp_approximate = inject_errors(
+        poses1_jp, noise_generator
     )
 
-    plot_robot_error(
-        experimental_data.measured_cp,
-        experimental_data.actual_cp,
-        corrupted_measured_cp,
+    plot_cartesian_errors(
+        poses1_cp, poses2_cp, poses2_cp_approximate, poses1_name, poses2_name
     )
-    plot_correction_offset(experimental_data, corrupted_measured_jp)
+    plot_correction_offset(poses1_jp, poses2_jp, poses2_jp_approximate)
 
 
 if __name__ == "__main__":

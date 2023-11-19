@@ -11,6 +11,7 @@ hydra:
 
 output_path: ${hydra:runtime.output_dir}
 global_device: "cuda"
+dataset_type: "measured-setpoint" # either "measured-setpoint" or "actual-measured"
 
 train_config:
   batch_size: 32
