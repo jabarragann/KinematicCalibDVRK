@@ -16,7 +16,7 @@ from kincalib.utils import (
 from kincalib.utils import calculate_orientation_error, calculate_position_error
 import matplotlib.pyplot as plt
 import seaborn as sns
-from kincalib.Calibration import RobotActualPoseCalulator
+from kincalib.Calibration import RobotActualPoseCalculator
 from kincalib.Motion.IkUtils import calculate_fk
 import numpy as np
 
@@ -144,7 +144,7 @@ def plot_correction_offset(
 
 def load_robot_pose_cal(
     test_data_path: Path, hand_eye_path: Path
-) -> RobotActualPoseCalulator:
+) -> RobotActualPoseCalculator:
     file_path = test_data_path
     hand_eye_file = hand_eye_path
 
@@ -153,7 +153,7 @@ def load_robot_pose_cal(
 
     log.info(f"Analyzing experiment {file_path.parent.name}")
 
-    experimental_data = RobotActualPoseCalulator.load_from_file(
+    experimental_data = RobotActualPoseCalculator.load_from_file(
         file_path=file_path, hand_eye_file=hand_eye_file
     )
 
@@ -183,7 +183,7 @@ class NetworkNoiseGenerator:
         model.load_state_dict(torch.load(weights_path))
         return cls(model, input_normalizer, output_normalizer)
 
-    def corrupt_jp_batch(self, input_jp: np.ndarray) -> Tuple[np.ndarray,np.ndarray]:
+    def corrupt_jp_batch(self, input_jp: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         jp_norm = self.input_normalizer(input_jp)
         jp_norm = torch.tensor(jp_norm.astype(np.float32))
         offset = self.model(jp_norm).detach().numpy()

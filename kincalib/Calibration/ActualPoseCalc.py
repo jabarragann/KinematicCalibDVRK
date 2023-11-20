@@ -20,7 +20,7 @@ log = Logger(__name__).log
 
 # TODO: Improve name of attributes. T_RG -> measured_cp
 @dataclass
-class RobotActualPoseCalulator:
+class RobotActualPoseCalculator:
     index_array: np.ndarray
     measured_jp: np.ndarray
     actual_jp: np.ndarray
@@ -33,10 +33,10 @@ class RobotActualPoseCalulator:
         self.calculate_error_metrics()
 
     def calculate_error_metrics(self):
-        self.position_error_measured_actual = calculate_position_error(
+        self.position_error_actual_measured = calculate_position_error(
             T_RG=self.measured_cp, T_RG_actual=self.actual_cp
         )
-        self.orientation_error_measured_actual = calculate_orientation_error(
+        self.orientation_error_actual_measured = calculate_orientation_error(
             T_RG=self.measured_cp, T_RG_actual=self.actual_cp
         )
         self.position_error_measured_setpoint = calculate_position_error(
@@ -56,8 +56,8 @@ class RobotActualPoseCalulator:
             q4=self.measured_jp[:, 3],
             q5=self.measured_jp[:, 4],
             q6=self.measured_jp[:, 5],
-            pos_error=self.position_error_measured_actual,
-            orientation_error=self.orientation_error_measured_actual,
+            pos_error=self.position_error_actual_measured,
+            orientation_error=self.orientation_error_actual_measured,
         )
 
         error_data = pd.DataFrame(temp_dict)
@@ -105,8 +105,8 @@ class RobotActualPoseCalulator:
 
         for i in range(self.index_array.shape[0]):
             error_metric = records.PoseErrorMetric(
-                self.position_error_measured_actual[i],
-                self.orientation_error_measured_actual[i],
+                self.position_error_actual_measured[i],
+                self.orientation_error_actual_measured[i],
             )
             if below_thresholds(error_metric):
                 measured_jp_rec.add_data(self.index_array[i], self.measured_jp[i])
@@ -121,8 +121,8 @@ class RobotActualPoseCalulator:
 
     @classmethod
     def load_from_file(
-        cls: RobotActualPoseCalulator, file_path: Path, hand_eye_file: Path
-    ) -> RobotActualPoseCalulator:
+        cls: RobotActualPoseCalculator, file_path: Path, hand_eye_file: Path
+    ) -> RobotActualPoseCalculator:
         record_dict = DataRecorder.create_records()
         data_dict = DataReaderFromCSV(file_path, record_dict).data_dict
 
@@ -143,7 +143,7 @@ class RobotActualPoseCalulator:
         T_RG_actual = cls.calculate_robot_actual_cp(T_RT=T_RT, T_TM=T_TM, T_MG=T_MG)
         actual_jp = cls.calculate_actual_jp(actual_cp=T_RG_actual)
 
-        cls: RobotActualPoseCalulator
+        cls: RobotActualPoseCalculator
         return cls(
             index_array=traj_index,
             measured_jp=measured_jp,
@@ -156,7 +156,7 @@ class RobotActualPoseCalulator:
 
     @classmethod
     def calculate_robot_actual_cp(
-        cls: RobotActualPoseCalulator,
+        cls: RobotActualPoseCalculator,
         T_RT: np.ndarray,
         T_TM: np.ndarray,
         T_MG: np.ndarray,

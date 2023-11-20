@@ -7,22 +7,22 @@ from kincalib.utils import (
 )
 import matplotlib.pyplot as plt
 import seaborn as sns
-from kincalib.Calibration import RobotActualPoseCalulator
+from kincalib.Calibration import RobotActualPoseCalculator
 import click
 
 log = Logger(__name__).log
 
 
-def plot_robot_error(experimental_data: RobotActualPoseCalulator):
-    position_error = experimental_data.position_error_measured_actual
-    orientation_error = experimental_data.orientation_error_measured_actual
+def plot_robot_error(experimental_data: RobotActualPoseCalculator):
+    position_error = experimental_data.position_error_actual_measured
+    orientation_error = experimental_data.orientation_error_actual_measured
     error_data = experimental_data.convert_to_dataframe()
 
     fig, axes = plt.subplots(2, 2)
     axes[0, 0].set_title("Error between measured and actual")
     create_cartesian_error_lineplot(
-        experimental_data.position_error_measured_actual,
-        experimental_data.orientation_error_measured_actual,
+        experimental_data.position_error_actual_measured,
+        experimental_data.orientation_error_actual_measured,
         axes[0, 0],
         axes[1, 0],
     )
@@ -47,15 +47,15 @@ def plot_robot_error(experimental_data: RobotActualPoseCalulator):
     create_cartesian_error_histogram(
         experimental_data.position_error_measured_setpoint,
         experimental_data.orientation_error_measured_setpoint,
-        experimental_data.position_error_measured_actual,
-        experimental_data.orientation_error_measured_actual,
+        experimental_data.position_error_actual_measured,
+        experimental_data.orientation_error_actual_measured,
         bins=30,
     )
 
     plt.show()
 
 
-def plot_correction_offset(experimental_data: RobotActualPoseCalulator):
+def plot_correction_offset(experimental_data: RobotActualPoseCalculator):
     sub_params = dict(
         top=0.88,
         bottom=0.06,
@@ -96,7 +96,7 @@ def plot_correction_offset(experimental_data: RobotActualPoseCalulator):
 def analyze_robot_error(data_file, handeye_file, out_dir, out_name):
     log.info(f"Analyzing experiment {data_file.parent.name}")
 
-    experimental_data = RobotActualPoseCalulator.load_from_file(
+    experimental_data = RobotActualPoseCalculator.load_from_file(
         file_path=data_file, hand_eye_file=handeye_file
     )
     if out_dir is None:
