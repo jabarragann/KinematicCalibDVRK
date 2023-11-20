@@ -201,6 +201,12 @@ class NetworkNoiseGenerator:
 
         return corrupted_measured
 
+    def inject_errors(self, poses1_jp: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+        poses2_jp_approximate = self.batch_corrupt(poses1_jp)
+        poses2_cp_approximate = calculate_fk(poses2_jp_approximate)
+
+        return poses2_cp_approximate, poses2_jp_approximate
+
 
 def load_noise_generator(root: Path) -> NetworkNoiseGenerator:
     weights_path = root / "final_weights.pth"
@@ -214,15 +220,6 @@ def load_noise_generator(root: Path) -> NetworkNoiseGenerator:
         weights_path, input_normalizer_path, output_normalizer_path
     )
     return noise_generator
-
-
-def inject_errors(
-    poses1_jp, noise_generator: NetworkNoiseGenerator
-) -> Tuple[np.ndarray, np.ndarray]:
-    poses2_jp_approximate = noise_generator.batch_corrupt(poses1_jp)
-    poses2_cp_approximate = calculate_fk(poses2_jp_approximate)
-
-    return poses2_cp_approximate, poses2_jp_approximate
 
 
 def load_dataset_config(model_path: Path) -> Dict[str, Any]:
@@ -274,9 +271,7 @@ def reduce_pose_error_with_nn():
     else:
         raise ValueError(f"Unknown dataset type {dataset_type}")
 
-    poses2_cp_approximate, poses2_jp_approximate = inject_errors(
-        poses1_jp, noise_generator
-    )
+    poses2_cp_approximate, poses2_jp_approximate = noise_generator.inject_errors(poses1_jp)
 
     plot_cartesian_errors(
         poses1_cp, poses2_cp, poses2_cp_approximate, poses1_name, poses2_name
