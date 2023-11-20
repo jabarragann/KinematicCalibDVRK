@@ -183,26 +183,27 @@ class NetworkNoiseGenerator:
         model.load_state_dict(torch.load(weights_path))
         return cls(model, input_normalizer, output_normalizer)
 
-    def batch_corrupt(self, measured_jp: np.ndarray) -> np.ndarray:
-        """Corrupts a batch of measured_jp measurements with nn. Injected
-        noise should minimize the error between actual_jp and measured_jp"""
-
-        jp_norm = self.input_normalizer(measured_jp)
+    def corrupt_jp_batch(self, input_jp: np.ndarray) -> Tuple[np.ndarray,np.ndarray]:
+        jp_norm = self.input_normalizer(input_jp)
         jp_norm = torch.tensor(jp_norm.astype(np.float32))
-        correction_offset = self.model(jp_norm).detach().numpy()
-        correction_offset = self.output_normalizer.reverse(correction_offset)
+        offset = self.model(jp_norm).detach().numpy()
+        offset = self.output_normalizer.reverse(offset)
 
         # Other way to do it that does not work
         # corrupted_actual2 = actual_jp
         # corrupted_actual2[:, 3:] += correction_offset[:, 3:]
 
         # correction_offset[:, :3] = 0  # Only apply the offset to last 3 joints
-        corrupted_measured = measured_jp + correction_offset
+        corrupted_jp = input_jp + offset
 
-        return corrupted_measured
+        return corrupted_jp, offset
 
     def inject_errors(self, poses1_jp: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
-        poses2_jp_approximate = self.batch_corrupt(poses1_jp)
+        """Corrupts a batch of jp measurements with nn. Injected
+        noise should minimize the error between actual_jp/measured_jp
+        or measured_jp/setpoint_jp depending on the used network."""
+
+        poses2_jp_approximate, offset = self.corrupt_jp_batch(poses1_jp)
         poses2_cp_approximate = calculate_fk(poses2_jp_approximate)
 
         return poses2_cp_approximate, poses2_jp_approximate
@@ -271,7 +272,9 @@ def reduce_pose_error_with_nn():
     else:
         raise ValueError(f"Unknown dataset type {dataset_type}")
 
-    poses2_cp_approximate, poses2_jp_approximate = noise_generator.inject_errors(poses1_jp)
+    poses2_cp_approximate, poses2_jp_approximate = noise_generator.inject_errors(
+        poses1_jp
+    )
 
     plot_cartesian_errors(
         poses1_cp, poses2_cp, poses2_cp_approximate, poses1_name, poses2_name
