@@ -83,64 +83,14 @@ def load_noise_generators(
     return nn1_measured_setpoint, nn2_actual_measured
 
 
-def calculate_simulated_poses(
-    robot_poses: RobotPosesContainer,
-    nn1_measured_setpoint: NetworkNoiseGenerator,
-    nn2_actual_measured: NetworkNoiseGenerator,
+def generate_error_hist(
+    real_robot_poses: RobotPosesContainer, simulated_robot_poses: RobotPosesContainer
 ):
-    approximated_measured_jp, alpha1 = nn1_measured_setpoint.corrupt_jp_batch(
-        robot_poses.setpoint_jp
-    )
-
-    # approximated_measured_jp should be the returned instead of ambf.measured_jp()
-    # approximated_measured_jp = robot_poses.setpoint_jp + alpha1
-    corrupted_setpoints1, alpha2 = nn2_actual_measured.corrupt_jp_batch(
-        approximated_measured_jp
-    )
-    # Corrupted setpoints are given to ambf.move_jp() command
-    corrupted_setpoints2 = robot_poses.setpoint_jp + alpha1 + alpha2
-    # Assuming no controller error on the simulated robot
-    approximated_actual_jp = corrupted_setpoints2
-
-    approximated_actual_cp = calculate_fk(approximated_actual_jp)
-    approximated_measured_cp = calculate_fk(approximated_measured_jp)
-
-    simulated_pos_error_actual_measured = calculate_position_error(
-        approximated_measured_cp, approximated_actual_cp
-    )
-    simulated_ori_error_actual_measured = calculate_orientation_error(
-        approximated_measured_cp, approximated_actual_cp
-    )
-
-    simulated_pos_error_measured_setpoint = calculate_position_error(
-        robot_poses.setpoint_cp, approximated_measured_cp
-    )
-    simulated_ori_error_measured_setpoint = calculate_orientation_error(
-        robot_poses.setpoint_cp, approximated_actual_cp
-    )
-
-    data_dict = dict(
-        pos_error_actual_measured=simulated_pos_error_actual_measured,
-        ori_error_actual_measured=simulated_ori_error_actual_measured,
-        pos_error_measured_setpoint=simulated_pos_error_measured_setpoint,
-        ori_error_measured_setpoint=simulated_ori_error_measured_setpoint,
-        label="simulated-robot",
-    )
-    error_data1 = pd.DataFrame(data_dict)
-    # data_dict = dict(
-    #     pos_error_actual_measured=robot_poses.position_error_actual_measured,
-    #     ori_error_actual_measured=robot_poses.orientation_error_actual_measured,
-    #     pos_error_measured_setpoint=robot_poses.position_error_measured_setpoint,
-    #     ori_error_measured_setpoint=robot_poses.orientation_error_measured_setpoint,
-    #     label="real-robot",
-    # )
-    # error_data2 = pd.DataFrame(data_dict)
-    real_robot_error_df = robot_poses.convert_to_error_dataframe()
-    error_data = pd.concat([error_data1, real_robot_error_df])
+    simulated_robot_error_df = simulated_robot_poses.convert_to_error_dataframe()
+    real_robot_error_df = real_robot_poses.convert_to_error_dataframe()
+    error_data = pd.concat([simulated_robot_error_df, real_robot_error_df])
 
     fig, axes = plt.subplots(2, 2)
-    # axes = np.expand_dims(axes, axis=0)
-
     stat = "proportion"
     bins = 50
 
@@ -156,6 +106,40 @@ def calculate_simulated_poses(
     plt.show()
 
 
+def calculate_simulated_poses(
+    real_robot_poses: RobotPosesContainer,
+    nn1_measured_setpoint: NetworkNoiseGenerator,
+    nn2_actual_measured: NetworkNoiseGenerator,
+):
+    approximated_measured_jp, alpha1 = nn1_measured_setpoint.corrupt_jp_batch(
+        real_robot_poses.setpoint_jp
+    )
+
+    # approximated_measured_jp should be returned instead of ambf.measured_jp()
+    # approximated_measured_jp = robot_poses.setpoint_jp + alpha1
+    approximated_actual_jp, alpha2 = nn2_actual_measured.corrupt_jp_batch(
+        approximated_measured_jp
+    )
+    # Corrupted setpoints are given to ambf.move_jp() command
+    corrupted_setpoints2 = real_robot_poses.setpoint_jp + alpha1 + alpha2
+
+    # Assuming no controller error on the simulated robot
+    # approximated_actual_jp = corrupted_setpoints2. Here they should be the same.
+    assert np.all(
+        np.isclose(approximated_actual_jp, corrupted_setpoints2)
+    ), "Error with nn logic"
+
+    simulated_robot_poses = RobotPosesContainer.create_from_jp_values(
+        "simulated_robot",
+        real_robot_poses.index_array,
+        real_robot_poses.setpoint_jp,
+        approximated_measured_jp,
+        approximated_actual_jp,
+    )
+
+    return simulated_robot_poses
+
+
 @hydra.main(
     version_base=None,
     config_path="./replay_motions_with_nn_confs",
@@ -167,11 +151,15 @@ def main(cfg: AppConfig):
     log.info(type(cfg.test_data_path))
 
     nn1_measured_setpoint, nn2_actual_measured = load_noise_generators(cfg)
-    robot_pose_data = load_robot_pose_cal(cfg.test_data_path, cfg.hand_eye_path)
+    real_robot_poses = load_robot_pose_cal(cfg.test_data_path, cfg.hand_eye_path)
 
-    calculate_simulated_poses(
-        robot_pose_data, nn1_measured_setpoint, nn2_actual_measured
+    simulated_robot_poses1 = calculate_simulated_poses(
+        real_robot_poses, nn1_measured_setpoint, nn2_actual_measured
     )
+
+    generate_error_hist(real_robot_poses, simulated_robot_poses1)
+
+    # replay_motions(cfg, simulated_robot_poses1)
 
 
 if __name__ == "__main__":

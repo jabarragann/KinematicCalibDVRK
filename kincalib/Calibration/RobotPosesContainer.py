@@ -8,6 +8,7 @@ from kincalib.Record.DataRecorder import DataReaderFromCSV, DataRecorder
 from kincalib.Transforms.Rotation import Rotation3D
 from kincalib.utils.Logger import Logger
 from kincalib.utils import calculate_orientation_error, calculate_position_error
+from kincalib.Motion.IkUtils import calculate_fk
 import kincalib.Record as records
 import json
 import numpy as np
@@ -130,6 +131,32 @@ class RobotPosesContainer:
 
         saver = records.RecordCollectionCsvSaver(output_path.parent)
         saver.save(records_list, file_name=output_path.name)
+
+    @classmethod
+    def create_from_jp_values(
+        cls: RobotPosesContainer,
+        robot_type: str,
+        index_array: np.ndarray,
+        setpoint_jp: np.ndarray,
+        measured_jp: np.ndarray,
+        actual_jp: np.ndarray,
+    ) -> RobotPosesContainer:
+        setpoint_cp = calculate_fk(setpoint_jp)
+        measured_cp = calculate_fk(measured_jp)
+        actual_cp = calculate_fk(actual_jp)
+
+        cls: RobotPosesContainer
+        instance = RobotPosesContainer(
+            robot_type,
+            index_array,
+            measured_jp,
+            actual_jp,
+            setpoint_jp,
+            measured_cp,
+            actual_cp,
+            setpoint_cp,
+        )
+        return instance 
 
     @classmethod
     def create_from_real_measurements(
