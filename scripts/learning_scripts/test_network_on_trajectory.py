@@ -43,24 +43,10 @@ def plot_histograms(
     fig, axes = plt.subplots(1, 2)
     axes = np.expand_dims(axes, axis=0)
 
-    sns.histplot(
-        data=error_data,
-        x="pos_error",
-        ax=axes[0, 0],
-        stat=stat,
-        kde=True,
-        bins=bins,
-        hue="label",
-    )
-    sns.histplot(
-        data=error_data,
-        x="ori_error",
-        ax=axes[0, 1],
-        stat=stat,
-        kde=True,
-        bins=bins,
-        hue="label",
-    )
+    # fmt: off
+    sns.histplot(data=error_data, x="pos_error", ax=axes[0, 0], stat=stat, kde=True, bins=bins, hue="label",)
+    sns.histplot(data=error_data, x="ori_error", ax=axes[0, 1], stat=stat, kde=True, bins=bins, hue="label",)
+    # fmt: on
 
 
 def plot_cartesian_errors(
