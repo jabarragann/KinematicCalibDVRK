@@ -1,2 +1,2 @@
-from .ActualPoseCalc import RobotPosesContainer
+from .RobotPosesContainer import RobotPosesContainer
 from .HandEyeCalibration import HandEyeBatchProcessing
