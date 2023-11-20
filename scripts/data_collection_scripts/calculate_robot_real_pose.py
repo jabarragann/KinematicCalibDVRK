@@ -7,13 +7,13 @@ from kincalib.utils import (
 )
 import matplotlib.pyplot as plt
 import seaborn as sns
-from kincalib.Calibration import RobotActualPoseCalculator
+from kincalib.Calibration import RobotPosesContainer
 import click
 
 log = Logger(__name__).log
 
 
-def plot_robot_error(experimental_data: RobotActualPoseCalculator):
+def plot_robot_error(experimental_data: RobotPosesContainer):
     position_error = experimental_data.position_error_actual_measured
     orientation_error = experimental_data.orientation_error_actual_measured
     error_data = experimental_data.convert_to_dataframe()
@@ -55,7 +55,7 @@ def plot_robot_error(experimental_data: RobotActualPoseCalculator):
     plt.show()
 
 
-def plot_correction_offset(experimental_data: RobotActualPoseCalculator):
+def plot_correction_offset(experimental_data: RobotPosesContainer):
     sub_params = dict(
         top=0.88,
         bottom=0.06,
@@ -96,7 +96,7 @@ def plot_correction_offset(experimental_data: RobotActualPoseCalculator):
 def analyze_robot_error(data_file, handeye_file, out_dir, out_name):
     log.info(f"Analyzing experiment {data_file.parent.name}")
 
-    experimental_data = RobotActualPoseCalculator.load_from_file(
+    experimental_data = RobotPosesContainer.create_from_real_measurements(
         file_path=data_file, hand_eye_file=handeye_file
     )
     if out_dir is None:

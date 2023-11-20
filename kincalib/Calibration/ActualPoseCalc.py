@@ -20,7 +20,8 @@ log = Logger(__name__).log
 
 # TODO: Improve name of attributes. T_RG -> measured_cp
 @dataclass
-class RobotActualPoseCalculator:
+class RobotPosesContainer:
+    robot_type: str  # "real" or "sim"
     index_array: np.ndarray
     measured_jp: np.ndarray
     actual_jp: np.ndarray
@@ -120,9 +121,9 @@ class RobotActualPoseCalculator:
         saver.save(records_list, file_name=output_path.name)
 
     @classmethod
-    def load_from_file(
-        cls: RobotActualPoseCalculator, file_path: Path, hand_eye_file: Path
-    ) -> RobotActualPoseCalculator:
+    def create_from_real_measurements(
+        cls: RobotPosesContainer, file_path: Path, hand_eye_file: Path
+    ) -> RobotPosesContainer:
         record_dict = DataRecorder.create_records()
         data_dict = DataReaderFromCSV(file_path, record_dict).data_dict
 
@@ -143,8 +144,9 @@ class RobotActualPoseCalculator:
         T_RG_actual = cls.calculate_robot_actual_cp(T_RT=T_RT, T_TM=T_TM, T_MG=T_MG)
         actual_jp = cls.calculate_actual_jp(actual_cp=T_RG_actual)
 
-        cls: RobotActualPoseCalculator
+        cls: RobotPosesContainer
         return cls(
+            robot_type="real",
             index_array=traj_index,
             measured_jp=measured_jp,
             actual_jp=actual_jp,
@@ -156,7 +158,7 @@ class RobotActualPoseCalculator:
 
     @classmethod
     def calculate_robot_actual_cp(
-        cls: RobotActualPoseCalculator,
+        cls: RobotPosesContainer,
         T_RT: np.ndarray,
         T_TM: np.ndarray,
         T_MG: np.ndarray,

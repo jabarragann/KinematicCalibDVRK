@@ -16,7 +16,7 @@ from kincalib.utils import (
 from kincalib.utils import calculate_orientation_error, calculate_position_error
 import matplotlib.pyplot as plt
 import seaborn as sns
-from kincalib.Calibration import RobotActualPoseCalculator
+from kincalib.Calibration import RobotPosesContainer
 from kincalib.Motion.IkUtils import calculate_fk
 import numpy as np
 
@@ -130,7 +130,7 @@ def plot_correction_offset(
 
 def load_robot_pose_cal(
     test_data_path: Path, hand_eye_path: Path
-) -> RobotActualPoseCalculator:
+) -> RobotPosesContainer:
     file_path = test_data_path
     hand_eye_file = hand_eye_path
 
@@ -139,7 +139,7 @@ def load_robot_pose_cal(
 
     log.info(f"Analyzing experiment {file_path.parent.name}")
 
-    experimental_data = RobotActualPoseCalculator.load_from_file(
+    experimental_data = RobotPosesContainer.create_from_real_measurements(
         file_path=file_path, hand_eye_file=hand_eye_file
     )
 
@@ -222,8 +222,8 @@ def load_dataset_config(model_path: Path) -> Dict[str, Any]:
 
 def reduce_pose_error_with_nn():
     # fmt:off
-    # test_data_path = "./data/experiments/data_collection3/combined/record_001_2.csv"
-    test_data_path = "./data/experiments/data_collection3/combined/bag1_traj_1.csv"
+    test_data_path = "./data/experiments/data_collection3/combined/record_001_2.csv"
+    # test_data_path = "./data/experiments/data_collection3/combined/bag1_traj_1.csv"
     hand_eye_path = "./data/experiments/data_collection3/combined/hand_eye_calib.json"
 
     model_path = "./outputs_hydra/train_test_simple_net_20231118_214536" # measured-setpoint
