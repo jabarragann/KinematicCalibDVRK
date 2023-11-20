@@ -64,6 +64,17 @@ class RobotPosesContainer:
         error_data = pd.DataFrame(temp_dict)
         return error_data
 
+    def convert_to_error_dataframe(self) -> pd.DataFrame:
+        data_dict = dict(
+            pos_error_actual_measured=self.position_error_actual_measured,
+            ori_error_actual_measured=self.orientation_error_actual_measured,
+            pos_error_measured_setpoint=self.position_error_measured_setpoint,
+            ori_error_measured_setpoint=self.orientation_error_measured_setpoint,
+            label=self.robot_type,
+        )
+        error_df = pd.DataFrame(data_dict)
+        return error_df
+
     def filter_and_save_to_record(
         self,
         output_path: Path,
@@ -146,7 +157,7 @@ class RobotPosesContainer:
 
         cls: RobotPosesContainer
         return cls(
-            robot_type="real",
+            robot_type="real-robot",
             index_array=traj_index,
             measured_jp=measured_jp,
             actual_jp=actual_jp,
