@@ -140,6 +140,48 @@ def calculate_simulated_poses(
     return simulated_robot_poses
 
 
+def replay_motions(cfg: AppConfig, simulated_robot_poses: RobotPosesContainer):
+    from kincalib.Motion.ReplayDevice import create_psm_handle
+    from kincalib.Motion.TrajectoryPlayer import TrajectoryPlayer, Trajectory
+
+    class SimpleRec:
+        def __init__(self, arm):
+            self.arm = arm
+            self.data = []
+            self.data_idx = []
+
+        def collect_data(self, index):
+            self.data_idx.append(index)
+            self.data.append(self.arm.measured_jp())
+
+        def get_data(self) -> np.ndarray:
+            return np.array(self.data)
+
+    total_idx = simulated_robot_poses.index_array.shape[0] 
+    trajectory = Trajectory.from_setpoint_array(
+        simulated_robot_poses.actual_jp[:total_idx, :]
+    )
+    arm = create_psm_handle("PSM2", type="ambf", expected_interval=0.01)
+    data_recorder = SimpleRec(arm)
+
+    trajectory_player = TrajectoryPlayer(
+        replay_device=arm,
+        trajectory=trajectory,
+        before_motion_loop_cb=[],
+        after_motion_cb=[data_recorder.collect_data],
+    )
+    trajectory_player.replay_trajectory(execute_cb=True)
+
+    simulated_robot_poses2 = RobotPosesContainer.create_from_jp_values(
+        "simulated_robot",
+        simulated_robot_poses.index_array[:total_idx],
+        simulated_robot_poses.setpoint_jp[:total_idx],
+        simulated_robot_poses.measured_jp[:total_idx],
+        data_recorder.get_data(),
+    )
+    return simulated_robot_poses2
+
+
 @hydra.main(
     version_base=None,
     config_path="./replay_motions_with_nn_confs",
@@ -159,7 +201,14 @@ def main(cfg: AppConfig):
 
     generate_error_hist(real_robot_poses, simulated_robot_poses1)
 
-    # replay_motions(cfg, simulated_robot_poses1)
+    simulated_robot_poses2 = replay_motions(cfg, simulated_robot_poses1)
+
+    # fmt: off
+    # Disable filter by raising the thresholds
+    real_robot_poses.filter_and_save_to_record(cfg.output_path / "real_robot_poses.csv", pos_error_threshold=800, orientation_error_threshold=1000)
+    simulated_robot_poses1.filter_and_save_to_record(cfg.output_path / "simulated_robot_poses1.csv", pos_error_threshold=800, orientation_error_threshold=1000)
+    simulated_robot_poses2.filter_and_save_to_record(cfg.output_path / "simulated_robot_poses2.csv", pos_error_threshold=800, orientation_error_threshold=1000)
+    # fmt: on
 
 
 if __name__ == "__main__":
