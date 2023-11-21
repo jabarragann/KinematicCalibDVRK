@@ -75,11 +75,13 @@ class TrajectoryPlayer:
 
             # Move
             log.info(f"Executed step {index}")
-            log.info(f"-- Trajectory Progress --> {100*index/len(self.trajectory):0.02f} %")
+            log.info(
+                f"-- Trajectory Progress --> {100*index/len(self.trajectory):0.02f} %"
+            )
             self.replay_device.move_jp(
                 numpy.array(new_js.position)
             ).wait()  # wait until motion is finished
-            time.sleep(0.2) # Wait to a static measurement.
+            time.sleep(0.2)  # Wait to a static measurement.
 
             # After motion callbacks
             if execute_cb:
@@ -128,7 +130,10 @@ class Trajectory:
         log.info("Trajectory report:")
         # report out of order setpoints
         if self.out_of_order_counter > 0:
-            log.info("-- Found and removed %i out of order setpoints" % (self.out_of_order_counter))
+            log.info(
+                "-- Found and removed %i out of order setpoints"
+                % (self.out_of_order_counter)
+            )
 
         # convert to mm
         bbmin = self.bbmin * 1000.0
@@ -140,12 +145,16 @@ class Trajectory:
 
         # compute duration
         duration = (
-            self.setpoints[-1].header.stamp.to_sec() - self.setpoints[0].header.stamp.to_sec()
+            self.setpoints[-1].header.stamp.to_sec()
+            - self.setpoints[0].header.stamp.to_sec()
         )
         log.info("-- Duration of trajectory: %f seconds" % (duration))
 
         # Number of poses
-        log.info("-- Found %i setpoints using topic %s" % (len(self.setpoints), self.setpoint_js_t))
+        log.info(
+            "-- Found %i setpoints using topic %s"
+            % (len(self.setpoints), self.setpoint_js_t)
+        )
         if len(self.setpoints) == 0:
             log.error("-- No trajectory found!")
 
@@ -222,6 +231,17 @@ class Trajectory:
             setpoint_cp_t=setpoint_cp_t,
         )
 
+    @classmethod
+    def from_setpoint_array(cls: Trajectory, setpoints_array: np.ndarray) -> Trajectory:
+        setpoints_msg_list =[]
+        for i in range(setpoints_array.shape[0]):
+            setpoint = JointState()
+            setpoint.name = ["q1", "q2", "q3", "q4", "q5", "q6"]
+            setpoint.position = setpoints_array[i,:].tolist()
+            setpoints_msg_list.append(setpoint)
+
+        return Trajectory(setpoints=setpoints_msg_list)
+
 
 @dataclass
 class RandomJointTrajectory(Trajectory):
@@ -280,7 +300,9 @@ class SoftRandomJointTrajectory(RandomJointTrajectory):
             new_jp = RandomJointTrajectory.generate_random_joint()
 
             # Calculate distance between start and end point
-            joints = np.vstack((np.array(init_jp).reshape(1, 6), np.array(new_jp).reshape(1, 6)))
+            joints = np.vstack(
+                (np.array(init_jp).reshape(1, 6), np.array(new_jp).reshape(1, 6))
+            )
             cp_positions = psm_kin_model.estimate_position_from_joints_array(joints)
             dist = np.linalg.norm(cp_positions[0, :] - cp_positions[1, :])
 
@@ -298,7 +320,9 @@ class SoftRandomJointTrajectory(RandomJointTrajectory):
 
             init_jp = setpoint.position
 
-        return SoftRandomJointTrajectory(sampling_factor=1, setpoints=setpoints[:samples])
+        return SoftRandomJointTrajectory(
+            sampling_factor=1, setpoints=setpoints[:samples]
+        )
 
 
 if __name__ == "__main__":
@@ -318,8 +342,8 @@ if __name__ == "__main__":
     # Robot handler has some issues with new crkt versions
     # arm = RobotHandler(device_namespace=arm_namespace, expected_interval=0.01)
     # arm.home_device()
-    arm = create_psm_handle(arm_namespace,type=arm_type, expected_interval=0.01)
-    home_device(arm,type=arm_type)
+    arm = create_psm_handle(arm_namespace, type=arm_type, expected_interval=0.01)
+    home_device(arm, type=arm_type)
 
     # callback example
     # outer_js_calib_cb = OuterJointsCalibrationRecorder(
