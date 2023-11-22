@@ -76,6 +76,47 @@ class RobotPosesContainer:
         error_df = pd.DataFrame(data_dict)
         return error_df
 
+    @classmethod
+    def create_records_for_saving(cls) -> Dict[str, records.Record]:
+        setpoint_jp = records.JointRecord("setpoint_jp", "setpoint_")
+        measured_jp = records.JointRecord("measured_jp", "measured_")
+        actual_jp = records.JointRecord("actual_jp", "actual_")
+        setpoint_cp = records.CartesianRecord("setpoint_cp", "setpoint_")
+        measured_cp = records.CartesianRecord("measured_cp", "measured_")
+        actual_cp = records.CartesianRecord("actual_cp", "actual_")
+        measured_setpoint_error = records.ErrorRecord(
+            "measured_setpoint_error", "measured_setpoint_"
+        )
+        actual_measured_error = records.ErrorRecord(
+            "actual_measured_error", "actual_measured_"
+        )
+
+        record_dict = dict(
+            setpoint_jp=setpoint_jp,
+            measured_jp=measured_jp,
+            actual_jp=actual_jp,
+            setpoint_cp=setpoint_cp,
+            measured_cp=measured_cp,
+            actual_cp=actual_cp,
+            measured_setpoint_error=measured_setpoint_error,
+            actual_measured_error=actual_measured_error,
+        )
+
+        assert cls.does_record_names_match_dict_keys(
+            record_dict
+        ), "Record names must match dict keys"
+
+        return record_dict
+
+    @classmethod
+    def does_record_names_match_dict_keys(
+        cls, record_dict: Dict[str, records.Record]
+    ) -> bool:
+        for name, record in record_dict.items():
+            if name != record.record_name:
+                return False
+        return True
+
     def filter_and_save_to_record(
         self,
         output_path: Path,
@@ -99,38 +140,32 @@ class RobotPosesContainer:
                 and error_metric.orientation_error < orientation_error_threshold
             )
 
-        records_list: List[records.Record] = []
-
-        measured_jp_rec = records.JointRecord("measured_jp", "measured_")
-        actual_jp_rec = records.JointRecord("actual_jp", "actual_")
-        setpoint_jp_rec = records.JointRecord("setpoint_jp", "setpoint_")
-        measured_cp_rec = records.CartesianRecord("measured_cp", "measured_")
-        actual_cp_rec = records.CartesianRecord("actual_cp", "actual_")
-        error_rec = records.ErrorRecord("pose_error", "error_")
-        records_list += [
-            measured_jp_rec,
-            actual_jp_rec,
-            setpoint_jp_rec,
-            measured_cp_rec,
-            actual_cp_rec,
-            error_rec,
-        ]
+        records_dict = self.create_records_for_saving()
 
         for i in range(self.index_array.shape[0]):
-            error_metric = records.PoseErrorMetric(
+            actual_measured_error = records.PoseErrorMetric(
                 self.position_error_actual_measured[i],
                 self.orientation_error_actual_measured[i],
             )
-            if below_thresholds(error_metric):
-                measured_jp_rec.add_data(self.index_array[i], self.measured_jp[i])
-                actual_jp_rec.add_data(self.index_array[i], self.actual_jp[i])
-                setpoint_jp_rec.add_data(self.index_array[i], self.setpoint_jp[i])
-                measured_cp_rec.add_data(self.index_array[i], self.measured_cp[:, :, i])
-                actual_cp_rec.add_data(self.index_array[i], self.actual_cp[:, :, i])
-                error_rec.add_data(self.index_array[i], error_metric)
+            measured_setpoint_error = records.PoseErrorMetric(
+                self.position_error_measured_setpoint[i],
+                self.orientation_error_measured_setpoint[i],
+            )
+
+            if below_thresholds(actual_measured_error):
+                # fmt:off
+                records_dict["setpoint_jp"].add_data( self.index_array[i], self.setpoint_jp[i])
+                records_dict["measured_jp"].add_data( self.index_array[i], self.measured_jp[i])
+                records_dict["actual_jp"].add_data( self.index_array[i], self.actual_jp[i])
+                records_dict["setpoint_cp"].add_data( self.index_array[i], self.setpoint_cp[:, :, i])
+                records_dict["measured_cp"].add_data( self.index_array[i], self.measured_cp[:, :, i])
+                records_dict["actual_cp"].add_data( self.index_array[i], self.actual_cp[:, :, i])
+                records_dict["measured_setpoint_error"].add_data(self.index_array[i], measured_setpoint_error)
+                records_dict["actual_measured_error"].add_data(self.index_array[i], actual_measured_error)
+                # fmt:on
 
         saver = records.RecordCollectionCsvSaver(output_path.parent)
-        saver.save(records_list, file_name=output_path.name)
+        saver.save(list(records_dict.values()), file_name=output_path.name)
 
     @classmethod
     def create_from_jp_values(
@@ -156,7 +191,7 @@ class RobotPosesContainer:
             actual_cp,
             setpoint_cp,
         )
-        return instance 
+        return instance
 
     @classmethod
     def create_from_real_measurements(
