@@ -1,6 +1,6 @@
 from pathlib import Path
 from typing import Dict, List
-from kincalib.Record.DataRecorder import DataReaderFromCSV, DataRecorder
+from kincalib.Record.DataRecorder import DataReaderFromCSV, RealDataRecorder
 from kincalib.Calibration.HandEyeCalibration import HandEyeBatchProcessing
 from kincalib.utils.Logger import Logger
 import numpy as np
@@ -108,7 +108,7 @@ def save_hand_eye_to_json(
     "--data_path", type=click.Path(exists=True, path_type=Path), required=True
 )
 def perform_hand_eye(data_path):
-    record_dict = DataRecorder.create_records()
+    record_dict = RealDataRecorder.create_records()
 
     data_path = Path(data_path)
     assert data_path.exists(), "File does not exist"

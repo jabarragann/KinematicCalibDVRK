@@ -1,6 +1,6 @@
 from pathlib import Path
 from typing import Dict, List
-from kincalib.Record.DataRecorder import DataReaderFromCSV, DataRecorder
+from kincalib.Record.DataRecorder import DataReaderFromCSV, RealDataRecorder
 from kincalib.Calibration.HandEyeCalibration import HandEyeBatchProcessing
 from kincalib.utils.Logger import Logger
 from kincalib.Motion.DvrkKin import DvrkPsmKin
@@ -11,7 +11,7 @@ log = Logger(__name__).log
 
 
 def fk_example():
-    record_dict = DataRecorder.create_records()
+    record_dict = RealDataRecorder.create_records()
     file_path = "./data/experiments/repetabability_experiment_rosbag01/01-11-2023-20-24-30/record_001.csv"
     # file_path = "./data/experiments/repetabability_experiment_rosbag01/01-11-2023-20-28-58/record_001.csv"
     # file_path = "./data/experiments/repetabability_experiment_rosbag01/01-11-2023-20-33-24/record_001.csv"

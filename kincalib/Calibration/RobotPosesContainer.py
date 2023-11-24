@@ -4,7 +4,7 @@ from typing import Dict, List
 
 import pandas as pd
 import kincalib
-from kincalib.Record.DataRecorder import DataReaderFromCSV, DataRecorder
+from kincalib.Record.DataRecorder import DataReaderFromCSV, RealDataRecorder
 from kincalib.Transforms.Rotation import Rotation3D
 from kincalib.utils.Logger import Logger
 from kincalib.utils import calculate_orientation_error, calculate_position_error
@@ -197,7 +197,7 @@ class RobotPosesContainer:
     def create_from_real_measurements(
         cls: RobotPosesContainer, file_path: Path, hand_eye_file: Path
     ) -> RobotPosesContainer:
-        record_dict = DataRecorder.create_records()
+        record_dict = RealDataRecorder.create_records()
         data_dict = DataReaderFromCSV(file_path, record_dict).data_dict
 
         traj_index = data_dict["traj_index"]
@@ -233,7 +233,6 @@ class RobotPosesContainer:
     def create_from_csv_file(
         cls: RobotPosesContainer, file_path: Path, robot_type: str
     ) -> RobotPosesContainer:
-
         log.debug(f"Loading data from {file_path}")
         record_dict = cls.create_records_for_saving()
 

@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Dict, List
 
 import pandas as pd
-from kincalib.Record.DataRecorder import DataReaderFromCSV, DataRecorder
+from kincalib.Record.DataRecorder import DataReaderFromCSV, RealDataRecorder
 from kincalib.Calibration.HandEyeCalibration import HandEyeBatchProcessing
 from kincalib.Transforms.Rotation import Rotation3D
 from kincalib.utils.Logger import Logger
@@ -58,7 +58,7 @@ def save_to_ethz_format(path: Path, ts: np.ndarray, data: np.ndarray, debug=Fals
     default="./data/experiments/data_collection2_test/chunk1/combined_data.csv",
 )
 def perform_hand_eye(data_path):
-    record_dict = DataRecorder.create_records()
+    record_dict = RealDataRecorder.create_records()
 
     data_path = Path(data_path)
     assert data_path.exists(), "File does not exist"

@@ -3,7 +3,7 @@ from typing import Dict, List
 from matplotlib import pyplot as plt
 
 import pandas as pd
-from kincalib.Record.DataRecorder import DataReaderFromCSV, DataRecorder
+from kincalib.Record.DataRecorder import DataReaderFromCSV, RealDataRecorder
 from kincalib.Calibration.HandEyeCalibration import HandEyeBatchProcessing
 from kincalib.utils.Logger import Logger
 from kincalib.Motion.DvrkKin import DvrkPsmKin
@@ -81,7 +81,7 @@ def demo(data_dict: Dict[str, np.ndarray]):
 
 
 def ik_example():
-    record_dict = DataRecorder.create_records()
+    record_dict = RealDataRecorder.create_records()
     file_path = "./data/experiments/repeatability_experiment_rosbag01/01-11-2023-20-24-30/combined_data.csv"
     # file_path = "./data/experiments/repeatability_experiment_rosbag01/01-11-2023-20-28-58/combined_data.csv"
     # file_path = "./data/experiments/repeatability_experiment_rosbag01/01-11-2023-20-33-24/combined_data.csv"

@@ -23,7 +23,7 @@ log = Logger(__file__).log
 
 
 @dataclass
-class DataRecorder:
+class RealDataRecorder:
     """
     TODO: needs some thought if needs to be more generic.
     """
@@ -70,7 +70,7 @@ class DataRecorder:
         )
 
     @classmethod
-    def create_records(cls: DataRecorder) -> Dict[str, Record]:
+    def create_records(cls: RealDataRecorder) -> Dict[str, Record]:
         """TODO: This method should be replace with an enum
 
         class enum(Enum):
@@ -198,7 +198,7 @@ class DataReaderFromCSV:
 
 
 def test_reader():
-    record_dict = DataRecorder.create_records()
+    record_dict = RealDataRecorder.create_records()
     file_path = "./data/experiments/repetabability_experiment_rosbag01/01-11-2023-20-24-30/record_001.csv"
     file_path = Path(file_path)
     assert file_path.exists(), "File does not exist"

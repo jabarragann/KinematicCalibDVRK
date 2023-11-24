@@ -5,7 +5,7 @@ from pathlib import Path
 
 # kincalib module
 from kincalib.utils.Logger import Logger
-from kincalib.Record.DataRecorder import DataRecorder
+from kincalib.Record.DataRecorder import RealDataRecorder
 from kincalib.Record.Record import RecordCollectionCsvSaver
 from kincalib.Sensors.FusionTrack import FusionTrack, FusionTrackDummy
 
@@ -53,11 +53,17 @@ def report_and_confirm(config_dict) -> str:
     help="Marker config file",
 )
 @click.option("--marker_name", type=str, default="dvrk_tip_frame")
-@click.option("--traj_type", type=click.Choice(["rosbag", "random", "soft"]), default="soft")
+@click.option(
+    "--traj_type", type=click.Choice(["rosbag", "random", "soft"]), default="soft"
+)
 @click.option("--traj_size", type=int, default=50)
-@click.option("--rosbag_path", type=click.Path(exists=True, path_type=Path), default="./data/dvrk_recorded_motions/pitch_exp_traj_01_test_cropped.bag")
+@click.option(
+    "--rosbag_path",
+    type=click.Path(exists=True, path_type=Path),
+    default="./data/dvrk_recorded_motions/pitch_exp_traj_01_test_cropped.bag",
+)
 @click.option("--description", type=str, default="")
-@click.option("--arm_type", type=click.Choice(["ambf","dvrk"]), default="dvrk")
+@click.option("--arm_type", type=click.Choice(["ambf", "dvrk"]), default="dvrk")
 @click.option(
     "--real/--sim",
     "use_real_sensor",
@@ -65,9 +71,19 @@ def report_and_confirm(config_dict) -> str:
     default=True,
     help="--real to use real atracsys sensor, --sim to use dummy sensor",
 )
-@click.option("--save_every", type=int, default=800, help="Send data to csv every n samples")
+@click.option(
+    "--save_every", type=int, default=800, help="Send data to csv every n samples"
+)
 def main(
-    marker_config, marker_name, traj_type, traj_size, rosbag_path, description, use_real_sensor, arm_type, save_every
+    marker_config,
+    marker_name,
+    traj_type,
+    traj_size,
+    rosbag_path,
+    description,
+    use_real_sensor,
+    arm_type,
+    save_every,
 ):
     # Save config
     now = datetime.now()
@@ -81,8 +97,8 @@ def main(
         rosbag_path=str(rosbag_path),
         description=description,
         use_real_sensor=use_real_sensor,
-        arm_type = arm_type,
-        save_every = save_every,
+        arm_type=arm_type,
+        save_every=save_every,
     )
     config_dict["output_path"] = str(output_path)
 
@@ -98,7 +114,7 @@ def main(
     if traj_type == "rosbag":
         rosbag_handle = RosbagUtils(rosbag_path)
         trajectory = Trajectory.from_ros_bag(rosbag_handle, sampling_factor=10)
-        config_dict['traj_size'] = len(trajectory)
+        config_dict["traj_size"] = len(trajectory)
     elif traj_type == "random":
         trajectory = RandomJointTrajectory.generate_trajectory(traj_size)
     elif traj_type == "soft":
@@ -106,7 +122,9 @@ def main(
 
     # Create trajectory player and recorders
     csv_saver = RecordCollectionCsvSaver(output_path)
-    data_recorder = DataRecorder(marker_name, arm, fusion_track, data_saver=csv_saver, save_every=save_every)
+    data_recorder = RealDataRecorder(
+        marker_name, arm, fusion_track, data_saver=csv_saver, save_every=save_every
+    )
 
     trajectory_player = TrajectoryPlayer(
         replay_device=arm,

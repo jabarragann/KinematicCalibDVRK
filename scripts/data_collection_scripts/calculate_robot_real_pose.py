@@ -96,18 +96,18 @@ def plot_correction_offset(experimental_data: RobotPosesContainer):
 def analyze_robot_error(data_file, handeye_file, out_dir, out_name):
     log.info(f"Analyzing experiment {data_file.parent.name}")
 
-    experimental_data = RobotPosesContainer.create_from_real_measurements(
+    real_robot_poses = RobotPosesContainer.create_from_real_measurements(
         file_path=data_file, hand_eye_file=handeye_file
     )
     if out_dir is None:
-        experimental_data.filter_and_save_to_record(
+        real_robot_poses.filter_and_save_to_record(
             output_path=data_file.parent / out_name
         )
     else:
-        experimental_data.filter_and_save_to_record(output_path=out_dir / out_name)
+        real_robot_poses.filter_and_save_to_record(output_path=out_dir / out_name)
 
-    plot_robot_error(experimental_data)
-    plot_correction_offset(experimental_data)
+    plot_robot_error(real_robot_poses)
+    plot_correction_offset(real_robot_poses)
 
 
 if __name__ == "__main__":
