@@ -157,7 +157,7 @@ def replay_motions(cfg: AppConfig, simulated_robot_poses: RobotPosesContainer):
         def get_data(self) -> np.ndarray:
             return np.array(self.data)
 
-    total_idx = simulated_robot_poses.index_array.shape[0] 
+    total_idx = simulated_robot_poses.index_array.shape[0]
     trajectory = Trajectory.from_setpoint_array(
         simulated_robot_poses.actual_jp[:total_idx, :]
     )
@@ -201,14 +201,14 @@ def main(cfg: AppConfig):
 
     generate_error_hist(real_robot_poses, simulated_robot_poses1)
 
-    simulated_robot_poses2 = replay_motions(cfg, simulated_robot_poses1)
+    # simulated_robot_poses2 = replay_motions(cfg, simulated_robot_poses1)
 
-    # fmt: off
-    # Disable filter by raising the thresholds
-    real_robot_poses.filter_and_save_to_record(cfg.output_path / "real_robot_poses.csv", pos_error_threshold=800, orientation_error_threshold=1000)
-    simulated_robot_poses1.filter_and_save_to_record(cfg.output_path / "simulated_robot_poses1.csv", pos_error_threshold=800, orientation_error_threshold=1000)
-    simulated_robot_poses2.filter_and_save_to_record(cfg.output_path / "simulated_robot_poses2.csv", pos_error_threshold=800, orientation_error_threshold=1000)
-    # fmt: on
+    # # fmt: off
+    # # Disable filter by raising the thresholds
+    # real_robot_poses.filter_and_save_to_record(cfg.output_path / "real_robot_poses.csv", pos_error_threshold=800, orientation_error_threshold=1000)
+    # simulated_robot_poses1.filter_and_save_to_record(cfg.output_path / "simulated_robot_poses1.csv", pos_error_threshold=800, orientation_error_threshold=1000)
+    # simulated_robot_poses2.filter_and_save_to_record(cfg.output_path / "simulated_robot_poses2.csv", pos_error_threshold=800, orientation_error_threshold=1000)
+    # # fmt: on
 
 
 if __name__ == "__main__":
