@@ -143,20 +143,27 @@ class DataReaderFromCSV:
         self.df = self.df.dropna()
         self.df = self.df.reset_index(drop=True)
 
-        # filter data with reg error
-        log.info(f"Input {self.df.shape[0]} samples")
-        filtered = self.df.loc[
-            self.df["marker_reg_error"] > self.reg_error_threshold, :
-        ]
-        self.df = self.df.loc[self.df["marker_reg_error"] < self.reg_error_threshold, :]
-        log.info(f"filtered {filtered.shape[0]} samples")
-        log.info(f"accepted {self.df.shape[0]} samples")
+        log.debug(f"Input {self.df.shape[0]} samples")
+        self.filter_with_marker_reg_error()
 
         self.data_dict: dict[str, np.ndarray] = {}
         self.data_dict["traj_index"] = self.df.loc[:, "traj_index"].to_numpy()
 
         for record in self.record_dict.values():
             self.extract_data(record)
+
+    def filter_with_marker_reg_error(self):
+        """Remove points from self.df if available"""
+        if "marker_reg_error" in self.df:
+            log.info("Filter with marker reg error")
+            filtered = self.df.loc[
+                self.df["marker_reg_error"] > self.reg_error_threshold, :
+            ]
+            self.df = self.df.loc[
+                self.df["marker_reg_error"] < self.reg_error_threshold, :
+            ]
+            log.info(f"filtered {filtered.shape[0]} samples")
+            log.info(f"accepted {self.df.shape[0]} samples")
 
     def extract_data(self, record):
         if type(record) == CartesianRecord:

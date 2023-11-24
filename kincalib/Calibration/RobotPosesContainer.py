@@ -230,6 +230,30 @@ class RobotPosesContainer:
         )
 
     @classmethod
+    def create_from_csv_file(
+        cls: RobotPosesContainer, file_path: Path, robot_type: str
+    ) -> RobotPosesContainer:
+
+        log.debug(f"Loading data from {file_path}")
+        record_dict = cls.create_records_for_saving()
+
+        # Reader does not have any method to read this type of records
+        del record_dict["measured_setpoint_error"]
+        del record_dict["actual_measured_error"]
+        data_dict = DataReaderFromCSV(file_path, record_dict).data_dict
+
+        return RobotPosesContainer(
+            robot_type,
+            index_array=data_dict["traj_index"],
+            setpoint_jp=data_dict["setpoint_jp"],
+            measured_jp=data_dict["measured_jp"],
+            actual_jp=data_dict["actual_jp"],
+            setpoint_cp=data_dict["setpoint_cp"],
+            measured_cp=data_dict["measured_cp"],
+            actual_cp=data_dict["actual_cp"],
+        )
+
+    @classmethod
     def calculate_robot_actual_cp(
         cls: RobotPosesContainer,
         T_RT: np.ndarray,
