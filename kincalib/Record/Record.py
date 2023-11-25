@@ -123,8 +123,11 @@ class JointRecord(Record):
         headers = self.get_headers(header_prefix)
         super().__init__(record_name, headers)
 
+    def get_joint_names(self):
+        return ["q1", "q2", "q3", "q4", "q5", "q6"]
+
     def get_headers(self, prefix):
-        headers = ["q1", "q2", "q3", "q4", "q5", "q6"]
+        headers = self.get_joint_names()
         return [prefix + h for h in headers]
 
     def add_data(self, idx: int, data: np.ndarray) -> bool:
