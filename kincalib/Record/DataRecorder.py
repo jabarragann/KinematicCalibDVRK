@@ -153,7 +153,6 @@ class AbstractCSVDataReader(ABC):
         for record in self.record_dict.values():
             self.extract_data(record)
 
-
     def extract_data(self, record):
         if type(record) == CartesianRecord:
             self.data_dict[record.record_name] = self.process_cartesian_csv_data(
@@ -207,7 +206,7 @@ class SensorsDataReader(AbstractCSVDataReader):
         self.load_records()
 
     def create_columns_with_prev_joint_pos(self):
-        prefix = "tminus1_measured"
+        prefix = "tminus1_measured_"
         measured_jp_tminus1 = JointRecord("measured_jp_tminus1", prefix)
         self.record_dict["measured_jp_tminus1"] = measured_jp_tminus1
         for h, j_name in zip(
@@ -229,6 +228,7 @@ class SensorsDataReader(AbstractCSVDataReader):
             log.info(f"filtered {filtered.shape[0]} samples")
             log.info(f"accepted {self.df.shape[0]} samples")
 
+
 @dataclass
 class RobotPosesDataReader(AbstractCSVDataReader):
     def __post_init__(self):
@@ -245,6 +245,7 @@ class RobotPosesDataReader(AbstractCSVDataReader):
 
         self.load_records()
 
+
 def test_reader():
     record_dict = RealDataRecorder.create_records()
     file_path = (
@@ -258,11 +259,15 @@ def test_reader():
 
     idx = 49
     print(f"measured_data at idx={idx} \n {data_dict['measured_jp'][idx, :]}")
-    print(f"prev_measured_data at idx={idx+1} \n {data_dict['measured_jp_tminus1'][idx+1, :]}")
+    print(
+        f"prev_measured_data at idx={idx+1} \n {data_dict['measured_jp_tminus1'][idx+1, :]}"
+    )
 
-    idx = 89 
+    idx = 89
     print(f"measured_data at idx={idx} \n {data_dict['measured_jp'][idx, :]}")
-    print(f"prev_measured_data at idx={idx+1} \n {data_dict['measured_jp_tminus1'][idx+1, :]}")
+    print(
+        f"prev_measured_data at idx={idx+1} \n {data_dict['measured_jp_tminus1'][idx+1, :]}"
+    )
 
 
 if __name__ == "__main__":
