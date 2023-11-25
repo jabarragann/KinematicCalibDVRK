@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Dict, List
 
 import pandas as pd
-from kincalib.Record.DataRecorder import DataReaderFromCSV, RealDataRecorder
+from kincalib.Record.DataRecorder import SensorsDataReader, RealDataRecorder
 from kincalib.Calibration.HandEyeCalibration import HandEyeBatchProcessing
 from kincalib.Transforms.Rotation import Rotation3D
 from kincalib.utils.Logger import Logger
@@ -64,7 +64,7 @@ def perform_hand_eye(data_path):
     assert data_path.exists(), "File does not exist"
     log.info(f"Reformatting data in  {data_path}")
 
-    data_dict = DataReaderFromCSV(data_path, record_dict).data_dict
+    data_dict = SensorsDataReader(data_path, record_dict).data_dict
     ts = data_dict["traj_index"]
 
     T_BH = data_dict["measured_cp"]

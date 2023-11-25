@@ -2,7 +2,7 @@ from __future__ import annotations
 from pathlib import Path
 import pandas as pd
 import kincalib
-from kincalib.Record.DataRecorder import DataReaderFromCSV, RealDataRecorder
+from kincalib.Record.DataRecorder import SensorsDataReader, RealDataRecorder
 from kincalib.utils.Logger import Logger
 import numpy as np
 import matplotlib.pyplot as plt
@@ -26,7 +26,7 @@ class ExperimentalData:
         assert file_path.exists(), f"File {file_path} does not exist"
 
         record_dict = RealDataRecorder.create_records()
-        data_dict = DataReaderFromCSV(file_path, record_dict).data_dict
+        data_dict = SensorsDataReader(file_path, record_dict).data_dict
 
         return cls(
             measured_jp=data_dict["measured_jp"], measured_cp=data_dict["measured_cp"]

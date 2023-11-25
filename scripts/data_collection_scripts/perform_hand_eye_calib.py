@@ -1,6 +1,6 @@
 from pathlib import Path
 from typing import Dict, List
-from kincalib.Record.DataRecorder import DataReaderFromCSV, RealDataRecorder
+from kincalib.Record.DataRecorder import SensorsDataReader, RealDataRecorder
 from kincalib.Calibration.HandEyeCalibration import HandEyeBatchProcessing
 from kincalib.utils.Logger import Logger
 import numpy as np
@@ -114,7 +114,7 @@ def perform_hand_eye(data_path):
     assert data_path.exists(), "File does not exist"
     log.info(f"Analyzing experiment {data_path.parent.name}")
 
-    data_dict = DataReaderFromCSV(data_path, record_dict).data_dict
+    data_dict = SensorsDataReader(data_path, record_dict).data_dict
 
     A_data = data_dict["measured_cp"]
     B_data = data_dict["marker_measured_cp"]

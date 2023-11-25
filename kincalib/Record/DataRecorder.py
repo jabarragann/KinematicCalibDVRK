@@ -1,4 +1,5 @@
 from __future__ import annotations
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path
 import time
@@ -131,39 +132,26 @@ class RealDataRecorder:
 
 
 @dataclass
-class DataReaderFromCSV:
-    """Read data into a df and use record_dict headers to split the data."""
-
+class AbstractCSVDataReader(ABC):
     file_path: str
     record_dict: Dict[str, Record]
-    reg_error_threshold: float = 0.0002  # Determined by looking at data
 
     def __post_init__(self):
         self.df = pd.read_csv(self.file_path)
+
+    @abstractmethod
+    def process_dataframe(self):
         self.df = self.df.dropna()
         self.df = self.df.reset_index(drop=True)
-
-        log.debug(f"Input {self.df.shape[0]} samples")
         self.filter_with_marker_reg_error()
+        self.load_records()
 
+    def load_records(self):
         self.data_dict: dict[str, np.ndarray] = {}
         self.data_dict["traj_index"] = self.df.loc[:, "traj_index"].to_numpy()
 
         for record in self.record_dict.values():
             self.extract_data(record)
-
-    def filter_with_marker_reg_error(self):
-        """Remove points from self.df if available"""
-        if "marker_reg_error" in self.df:
-            log.info("Filter with marker reg error")
-            filtered = self.df.loc[
-                self.df["marker_reg_error"] > self.reg_error_threshold, :
-            ]
-            self.df = self.df.loc[
-                self.df["marker_reg_error"] < self.reg_error_threshold, :
-            ]
-            log.info(f"filtered {filtered.shape[0]} samples")
-            log.info(f"accepted {self.df.shape[0]} samples")
 
     def extract_data(self, record):
         if type(record) == CartesianRecord:
@@ -197,14 +185,89 @@ class DataReaderFromCSV:
         return pose_arr
 
 
+@dataclass
+class SensorsDataReader(AbstractCSVDataReader):
+    """Read data into a df and use record_dict headers to split the data."""
+
+    reg_error_threshold: float = 0.0002  # Determined by looking at data
+
+    def __post_init__(self):
+        super().__post_init__()
+        self.process_dataframe()
+
+    def process_dataframe(self):
+        self.create_columns_with_prev_joint_pos()
+
+        self.df = self.df.dropna()
+        self.df = self.df.reset_index(drop=True)
+        log.debug(f"Input {self.df.shape[0]} samples")
+        self.filter_with_marker_reg_error()
+
+        self.load_records()
+
+    def create_columns_with_prev_joint_pos(self):
+        prefix = "tminus1_measured"
+        measured_jp_tminus1 = JointRecord("measured_jp_tminus1", prefix)
+        self.record_dict["measured_jp_tminus1"] = measured_jp_tminus1
+        for h, j_name in zip(
+            self.record_dict["measured_jp"].headers,
+            self.record_dict["measured_jp_tminus1"].get_joint_names(),
+        ):
+            self.df[prefix + j_name] = self.df[h].shift(1)
+
+    def filter_with_marker_reg_error(self):
+        """Remove points from self.df if available"""
+        if "marker_reg_error" in self.df:
+            log.info("Filter with marker reg error")
+            filtered = self.df.loc[
+                self.df["marker_reg_error"] > self.reg_error_threshold, :
+            ]
+            self.df = self.df.loc[
+                self.df["marker_reg_error"] < self.reg_error_threshold, :
+            ]
+            log.info(f"filtered {filtered.shape[0]} samples")
+            log.info(f"accepted {self.df.shape[0]} samples")
+
+
+@dataclass
+class RobotPosesDataReader(AbstractCSVDataReader):
+    def __post_init__(self):
+        super().__post_init__()
+        self.process_dataframe()
+
+    def process_dataframe(self):
+        self.df = self.df.dropna()
+        self.df = self.df.reset_index(drop=True)
+
+        prefix = "tminus1_measured"
+        measured_jp_tminus1 = JointRecord("measured_jp_tminus1", prefix)
+        self.record_dict["measured_jp_tminus1"] = measured_jp_tminus1
+
+        self.load_records()
+
+
 def test_reader():
     record_dict = RealDataRecorder.create_records()
-    file_path = "./data/experiments/repetabability_experiment_rosbag01/01-11-2023-20-24-30/record_001.csv"
+    file_path = (
+        "data/experiments/data_collection3_orig/14-11-2023-18-49-31/record_001.csv"
+    )
     file_path = Path(file_path)
     assert file_path.exists(), "File does not exist"
-    data_dict = DataReaderFromCSV(file_path, record_dict).data_dict
+    data_dict = SensorsDataReader(file_path, record_dict).data_dict
     print(data_dict["measured_cp"].shape)
     print(data_dict["measured_cp"][:, :, 0])
+
+    idx = 49
+    print(f"measured_data at idx={idx} \n {data_dict['measured_jp'][idx, :]}")
+    print(
+        f"prev_measured_data at idx={idx+1} \n {data_dict['measured_jp_tminus1'][idx+1, :]}"
+    )
+
+    idx = 89
+    print(f"measured_data at idx={idx} \n {data_dict['measured_jp'][idx, :]}")
+    print(
+        f"prev_measured_data at idx={idx+1} \n {data_dict['measured_jp_tminus1'][idx+1, :]}"
+    )
 
 
 if __name__ == "__main__":

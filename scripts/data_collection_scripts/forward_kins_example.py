@@ -1,6 +1,6 @@
 from pathlib import Path
 from typing import Dict, List
-from kincalib.Record.DataRecorder import DataReaderFromCSV, RealDataRecorder
+from kincalib.Record.DataRecorder import SensorsDataReader, RealDataRecorder
 from kincalib.Calibration.HandEyeCalibration import HandEyeBatchProcessing
 from kincalib.utils.Logger import Logger
 from kincalib.Motion.DvrkKin import DvrkPsmKin
@@ -20,7 +20,7 @@ def fk_example():
     assert file_path.exists(), "File does not exist"
     log.info(f"Analyzing experiment {file_path.parent.name}")
 
-    data_dict = DataReaderFromCSV(file_path, record_dict).data_dict
+    data_dict = SensorsDataReader(file_path, record_dict).data_dict
 
     measured_jp = data_dict["measured_jp"]
     measured_cp = data_dict["measured_cp"]
