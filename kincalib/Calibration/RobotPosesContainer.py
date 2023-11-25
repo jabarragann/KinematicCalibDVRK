@@ -5,6 +5,7 @@ from typing import Dict, List
 import pandas as pd
 import kincalib
 from kincalib.Record.DataRecorder import SensorsDataReader, RealDataRecorder
+from kincalib.Record.Record import JointRecord
 from kincalib.Transforms.Rotation import Rotation3D
 from kincalib.utils.Logger import Logger
 from kincalib.utils import calculate_orientation_error, calculate_position_error
@@ -30,6 +31,7 @@ class RobotPosesContainer:
     measured_cp: np.ndarray
     actual_cp: np.ndarray
     setpoint_cp: np.ndarray
+    prev_measured_jp: np.ndarray
 
     def __post_init__(self):
         self.calculate_error_metrics()
@@ -91,6 +93,10 @@ class RobotPosesContainer:
             "actual_measured_error", "actual_measured_"
         )
 
+        measured_jp_tminus1 = records.JointRecord(
+            "measured_jp_tminus1", "tminus1_measured_"
+        )
+
         record_dict = dict(
             setpoint_jp=setpoint_jp,
             measured_jp=measured_jp,
@@ -100,6 +106,7 @@ class RobotPosesContainer:
             actual_cp=actual_cp,
             measured_setpoint_error=measured_setpoint_error,
             actual_measured_error=actual_measured_error,
+            measured_jp_tminus1=measured_jp_tminus1,
         )
 
         assert cls.does_record_names_match_dict_keys(
@@ -162,6 +169,9 @@ class RobotPosesContainer:
                 records_dict["actual_cp"].add_data( self.index_array[i], self.actual_cp[:, :, i])
                 records_dict["measured_setpoint_error"].add_data(self.index_array[i], measured_setpoint_error)
                 records_dict["actual_measured_error"].add_data(self.index_array[i], actual_measured_error)
+                records_dict["measured_jp_tminus1"].add_data(
+                    self.index_array[i], self.prev_measured_jp["measured_jp_tminus1"][i]
+                )
                 # fmt:on
 
         saver = records.RecordCollectionCsvSaver(output_path.parent)
@@ -206,6 +216,8 @@ class RobotPosesContainer:
         measured_jp = data_dict["measured_jp"]
         setpoint_jp = data_dict["setpoint_jp"]
         setpoint_cp = data_dict["setpoint_cp"]
+        measured_jp_tminus1 = data_dict["measured_jp_tminus1"]
+        prev_measured_dict = dict(measured_jp_tminus1=measured_jp_tminus1)
 
         with open(hand_eye_file, "r") as file:
             hand_eye_data = json.load(file)
@@ -217,8 +229,7 @@ class RobotPosesContainer:
         T_RG_actual = cls.calculate_robot_actual_cp(T_RT=T_RT, T_TM=T_TM, T_MG=T_MG)
         actual_jp = cls.calculate_actual_jp(actual_cp=T_RG_actual)
 
-        cls: RobotPosesContainer
-        return cls(
+        return RobotPosesContainer(
             robot_type="real-robot",
             index_array=traj_index,
             measured_jp=measured_jp,
@@ -227,6 +238,7 @@ class RobotPosesContainer:
             measured_cp=T_RG,
             actual_cp=T_RG_actual,
             setpoint_cp=setpoint_cp,
+            prev_measured_jp=prev_measured_dict,
         )
 
     @classmethod
