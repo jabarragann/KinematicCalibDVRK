@@ -128,9 +128,7 @@ def plot_correction_offset(
     plt.show()
 
 
-def load_robot_pose_cal(
-    test_data_path: Path, hand_eye_path: Path
-) -> RobotPosesContainer:
+def load_robot_poses(test_data_path: Path, hand_eye_path: Path) -> RobotPosesContainer:
     file_path = test_data_path
     hand_eye_file = hand_eye_path
 

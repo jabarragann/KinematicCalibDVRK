@@ -13,7 +13,7 @@ from replay_motions_with_nn_confs.structured_confs import (
 )
 from kincalib.utils.Logger import Logger
 from omegaconf import OmegaConf
-from test_network_on_trajectory import NetworkNoiseGenerator, load_robot_pose_cal
+from test_network_on_trajectory import NetworkNoiseGenerator, load_robot_poses
 from kincalib.Motion.IkUtils import calculate_fk
 from kincalib.utils import calculate_orientation_error, calculate_position_error
 import seaborn as sns
@@ -193,7 +193,7 @@ def main(cfg: AppConfig):
     log.info(type(cfg.test_data_path))
 
     nn1_measured_setpoint, nn2_actual_measured = load_noise_generators(cfg)
-    real_robot_poses = load_robot_pose_cal(cfg.test_data_path, cfg.hand_eye_path)
+    real_robot_poses = load_robot_poses(cfg.test_data_path, cfg.hand_eye_path)
 
     simulated_robot_poses1 = calculate_simulated_poses(
         real_robot_poses, nn1_measured_setpoint, nn2_actual_measured
