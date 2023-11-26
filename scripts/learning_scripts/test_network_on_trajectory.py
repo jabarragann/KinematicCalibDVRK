@@ -159,16 +159,24 @@ class NetworkNoiseGenerator:
         weights_path: Path,
         input_normalizer_json: Path,
         output_normalizer_json: Path,
+        input_features: int,
     ) -> NetworkNoiseGenerator:
         input_normalizer = Normalizer.from_json(input_normalizer_json)
         output_normalizer = Normalizer.from_json(output_normalizer_json)
 
-        model = BestMLP2()
+        model = BestMLP2(input_features)
         model.load_state_dict(torch.load(weights_path))
         return cls(model, input_normalizer, output_normalizer)
 
-    def corrupt_jp_batch(self, input_jp: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
-        jp_norm = self.input_normalizer(input_jp)
+    def corrupt_jp_batch(
+        self, input_jp: np.ndarray, prev_measured: np.ndarray, cfg: Dict
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        if cfg["include_prev_measured"]:
+            complete_input = np.hstack((input_jp, prev_measured))
+        else:
+            complete_input = input_jp
+
+        jp_norm = self.input_normalizer(complete_input)
         jp_norm = torch.tensor(jp_norm.astype(np.float32))
         offset = self.model(jp_norm).detach().numpy()
         offset = self.output_normalizer.reverse(offset)
@@ -182,18 +190,22 @@ class NetworkNoiseGenerator:
 
         return corrupted_jp, offset
 
-    def inject_errors(self, poses1_jp: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    def inject_errors(
+        self, poses1_jp: np.ndarray, prev_measured: np.ndarray, cfg: Dict
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """Corrupts a batch of jp measurements with nn. Injected
         noise should minimize the error between actual_jp/measured_jp
         or measured_jp/setpoint_jp depending on the used network."""
 
-        poses2_jp_approximate, offset = self.corrupt_jp_batch(poses1_jp)
+        poses2_jp_approximate, offset = self.corrupt_jp_batch(
+            poses1_jp, prev_measured, cfg
+        )
         poses2_cp_approximate = calculate_fk(poses2_jp_approximate)
 
         return poses2_cp_approximate, poses2_jp_approximate
 
 
-def load_noise_generator(root: Path) -> NetworkNoiseGenerator:
+def load_noise_generator(root: Path, input_features: int) -> NetworkNoiseGenerator:
     weights_path = root / "final_weights.pth"
     input_normalizer_path = root / "input_normalizer.json"
     output_normalizer_path = root / "output_normalizer.json"
@@ -202,7 +214,7 @@ def load_noise_generator(root: Path) -> NetworkNoiseGenerator:
     assert output_normalizer_path.exists(), f"{output_normalizer_path} does not exist"
 
     noise_generator = NetworkNoiseGenerator.create_from_files(
-        weights_path, input_normalizer_path, output_normalizer_path
+        weights_path, input_normalizer_path, output_normalizer_path, input_features
     )
     return noise_generator
 
@@ -220,12 +232,15 @@ def load_dataset_config(model_path: Path) -> Dict[str, Any]:
 
 def reduce_pose_error_with_nn():
     # fmt:off
-    test_data_path = "./data/experiments/data_collection3/combined/record_001_2.csv"
-    # test_data_path = "./data/experiments/data_collection3/combined/bag1_traj_1.csv"
+    # test_data_path = "./data/experiments/data_collection3/combined/record_001_2.csv"
+    test_data_path = "./data/experiments/data_collection3/combined/bag1_traj_1.csv"
     hand_eye_path = "./data/experiments/data_collection3/combined/hand_eye_calib.json"
 
-    model_path = "./outputs_hydra/train_test_simple_net_20231118_214536" # measured-setpoint
-    # model_path = "./outputs_hydra/train_test_simple_net_20231118_214647" # actual-measured
+    # model_path = "./outputs_hydra/train_test_simple_net_20231118_214536" # measured-setpoint
+    # # model_path = "./outputs_hydra/train_test_simple_net_20231118_214647" # actual-measured
+
+    # model_path = "outputs_hydra/train_test_simple_net_20231126_131719" # measured-setpoint
+    model_path = "outputs_hydra/train_test_simple_net_20231126_131857" # actual-measured
     # fmt:on
 
     test_data_path = Path(test_data_path)
@@ -234,10 +249,13 @@ def reduce_pose_error_with_nn():
 
     cfg_dict = load_dataset_config(model_path)
     dataset_type = cfg_dict["dataset_type"]
-    log.info(f"Loading a model with dataset type: {dataset_type}")
+    include_prev_measured = cfg_dict["include_prev_measured"]
+    input_features = 12 if include_prev_measured else 6
 
-    experimental_data = load_robot_pose_cal(test_data_path, hand_eye_path)
-    noise_generator = load_noise_generator(model_path)
+    log.info(f"Loading a model with dataset cfg:\n {cfg_dict}")
+
+    experimental_data = load_robot_poses(test_data_path, hand_eye_path)
+    noise_generator = load_noise_generator(model_path, input_features)
 
     if dataset_type == "measured-setpoint":
         poses1_cp = experimental_data.setpoint_cp
@@ -256,8 +274,10 @@ def reduce_pose_error_with_nn():
     else:
         raise ValueError(f"Unknown dataset type {dataset_type}")
 
+    tminus1_measured_jp = experimental_data.prev_measured_jp["measured_jp_tminus1"]
+
     poses2_cp_approximate, poses2_jp_approximate = noise_generator.inject_errors(
-        poses1_jp
+        poses1_jp, tminus1_measured_jp, cfg_dict
     )
 
     plot_cartesian_errors(
