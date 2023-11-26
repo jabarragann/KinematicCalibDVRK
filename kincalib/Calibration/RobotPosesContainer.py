@@ -31,7 +31,7 @@ class RobotPosesContainer:
     measured_cp: np.ndarray
     actual_cp: np.ndarray
     setpoint_cp: np.ndarray
-    prev_measured_jp: np.ndarray
+    prev_measured_jp: Dict[str, np.ndarray]
 
     def __post_init__(self):
         self.calculate_error_metrics()
