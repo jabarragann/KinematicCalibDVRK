@@ -35,6 +35,7 @@ class JointsDataset1(Dataset):
     mode: str
     input_normalizer: Normalizer = None
     output_normalizer: Normalizer = None
+    include_prev_measured: bool = False
 
     def __post_init__(self) -> None:
         super().__init__()
@@ -42,6 +43,9 @@ class JointsDataset1(Dataset):
         self.X, self.Y = self.read_files(self.path_lists)
         self.X = torch.tensor(self.X.astype(np.float32))
         self.Y = torch.tensor(self.Y.astype(np.float32))
+
+    def get_input_dim(self):
+        return self.X.shape[1]
 
     def validate_mode(self):
         assert self.mode in [
@@ -54,6 +58,7 @@ class JointsDataset1(Dataset):
         measured_cols = ["measured_" + joint_name for joint_name in joint_names]
         actual_cols = ["actual_" + joint_name for joint_name in joint_names]
         setpoint_cols = ["setpoint_" + j for j in joint_names]
+        tminus1_measured_cols = ["tminus1_measured_" + j for j in joint_names]
 
         X = []
         Y = []
@@ -63,6 +68,7 @@ class JointsDataset1(Dataset):
             measured_data = df.loc[:, measured_cols].to_numpy()
             actual_data = df.loc[:, actual_cols].to_numpy()
             setpoint_data = df.loc[:, setpoint_cols].to_numpy()
+            tminus1_measured_data = df.loc[:, tminus1_measured_cols].to_numpy()
 
             if self.mode == "measured-setpoint":
                 X.append(setpoint_data)
@@ -70,6 +76,9 @@ class JointsDataset1(Dataset):
             elif self.mode == "actual-measured":
                 X.append(measured_data)
                 Y.append(actual_data - measured_data)
+
+            if self.include_prev_measured:
+                X[-1] = np.concatenate((X[-1], tminus1_measured_data), axis=1)
 
         X = np.concatenate(X, axis=0)
         Y = np.concatenate(Y, axis=0)
@@ -142,9 +151,8 @@ class Normalizer:
 
 if __name__ == "__main__":
     exp_root = []
-    exp_root.append(
-        "./data/experiments/data_collection2_updated_collection_scripts/13-11-2023-20-33-49/filtered_dataset.csv"
-    )
+    exp_root.append("data/experiments/data_collection3/combined/dataset1.csv")
+    exp_root.append("data/experiments/data_collection3/combined/dataset2.csv")
     exp_root = [Path(p) for p in exp_root]
 
     train_data = JointsDataset1(path_lists=exp_root, mode="measured-setpoint")
