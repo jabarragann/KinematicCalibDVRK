@@ -38,7 +38,11 @@ def load_data(cfg: ExperimentConfig) -> DatasetContainer:
     train_paths = [Path(p) for p in cfg.path_config.train_paths]
     test_paths = [Path(p) for p in cfg.path_config.test_paths]
 
-    train_dataset = JointsDataset1(train_paths, mode=cfg.dataset_type)
+    train_dataset = JointsDataset1(
+        train_paths,
+        mode=cfg.dataset_config.dataset_type,
+        include_prev_measured=cfg.dataset_config.include_prev_measured,
+    )
 
     # Create input output normalizers
     input_normalizer = Normalizer(train_dataset.X)
@@ -49,14 +53,19 @@ def load_data(cfg: ExperimentConfig) -> DatasetContainer:
     output_normalizer.to_json(Path(cfg.output_path) / "output_normalizer.json")
     train_dataset.set_output_normalizer(output_normalizer)
 
-    test_dataset = JointsDataset1(test_paths, mode=cfg.dataset_type)
+    test_dataset = JointsDataset1(
+        test_paths,
+        mode=cfg.dataset_config.dataset_type,
+        include_prev_measured=cfg.dataset_config.include_prev_measured,
+    )
     test_dataset.set_input_normalizer(input_normalizer)
     test_dataset.set_output_normalizer(output_normalizer)
 
     with open(Path(cfg.output_path) / "dataset_info.json", "w") as file:
         json.dump(
             {
-                "dataset_type": cfg.dataset_type,
+                "dataset_type": cfg.dataset_config.dataset_type,
+                "include_prev_measured": cfg.dataset_config.include_prev_measured,
                 "train_size": len(train_dataset),
                 "test_size": len(test_dataset),
             },
@@ -81,7 +90,8 @@ def load_data(cfg: ExperimentConfig) -> DatasetContainer:
 
 def train_model(cfg: ExperimentConfig, dataset_container: DatasetContainer):
     output_path = Path(cfg.output_path)
-    model = BestMLP2()
+    in_features = dataset_container.train_dataset.get_input_dim()
+    model = BestMLP2(in_features=in_features)
     model.train()
     optimizer = torch.optim.Adam(model.parameters(), lr=cfg.train_config.lr)
 

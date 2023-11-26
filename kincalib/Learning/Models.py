@@ -3,11 +3,9 @@ from torch import nn
 
 
 class BestMLP2(nn.Module):
-    def __init__(self) -> None:
+    def __init__(self, in_features) -> None:
         super().__init__()
         layers = []
-
-        in_features = 6
 
         layers.append(nn.Linear(in_features, 140))
         layers.append(nn.ReLU())
@@ -43,7 +41,7 @@ if __name__ == "__main__":
 
     dataloader = DataLoader(train_data, batch_size=4, shuffle=True)
 
-    model = BestMLP2()
+    model = BestMLP2(in_features=6)
     log.info("Test model with random data")
     log.info(model)
     log.info(model(torch.randn(1, 6)))

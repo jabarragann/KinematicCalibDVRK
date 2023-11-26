@@ -20,10 +20,16 @@ class ExperimentConfig:
     global_device: str
     output_path: Path
     path_config: PathConfig
-    dataset_type: str
+    dataset_config: DatasetConfig
     actions: Actions
     train_config: TrainConfig
     test_config: TestConfig
+
+
+@dataclass
+class DatasetConfig:
+    dataset_type: str  # measured-setpoint or actual-measured
+    include_prev_measured: bool
 
 
 @dataclass
