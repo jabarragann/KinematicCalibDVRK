@@ -45,16 +45,18 @@ class ExperimentMetrics:
     pos_error: AggregatedMetrics
     ori_error: AggregatedMetrics
 
-    def to_table(self) -> MarkdownTable:
+    def to_table(self, with_jp=True) -> MarkdownTable:
         md_table = MarkdownTable(
             headers=["metric", "N", "mean", "std", "median", "max", "min"]
         )
-        md_table.add_data(**self.q1_error.to_dict())
-        md_table.add_data(**self.q2_error.to_dict())
-        md_table.add_data(**self.q3_error.to_dict())
-        md_table.add_data(**self.q4_error.to_dict())
-        md_table.add_data(**self.q5_error.to_dict())
-        md_table.add_data(**self.q6_error.to_dict())
+        if with_jp:
+            md_table.add_data(**self.q1_error.to_dict())
+            md_table.add_data(**self.q2_error.to_dict())
+            md_table.add_data(**self.q3_error.to_dict())
+            md_table.add_data(**self.q4_error.to_dict())
+            md_table.add_data(**self.q5_error.to_dict())
+            md_table.add_data(**self.q6_error.to_dict())
+
         md_table.add_data(**self.pos_error.to_dict())
         md_table.add_data(**self.ori_error.to_dict())
 

@@ -47,15 +47,20 @@ class MarkdownTable:
 
     def get_full_table(self, floatfmt=".5f"):
         return tabulate(
-            self.table, headers=self.headers, tablefmt=self.table_format, floatfmt=floatfmt
+            self.table,
+            headers=self.headers,
+            tablefmt=self.table_format,
+            floatfmt=floatfmt,
         )
 
-    def print(self, floatfmt=".4f"):
+    def print(self, floatfmt=".5f"):
         print(f"\n{self.get_full_table(floatfmt=floatfmt)}\n")
 
 
 if __name__ == "__main__":
-    table = MarkdownTable(headers=["type", "q1", "q2", "q3", "q4", "q5", "q6", "cartesian"])
+    table = MarkdownTable(
+        headers=["type", "q1", "q2", "q3", "q4", "q5", "q6", "cartesian"]
+    )
 
     # fmt: off
     data1 = dict( type="robot", q1=-5.53456, q2=5.0, q3=4.0, q4=5, q5=6, q6=7, cartesian=8)
