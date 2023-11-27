@@ -4,6 +4,7 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 from matplotlib import pyplot as plt
+import numpy as np
 import torch
 from kincalib.Learning import Trainer, BestMLP2
 from kincalib.utils.Logger import Logger
@@ -11,6 +12,7 @@ from omegaconf import OmegaConf
 import hydra
 from kincalib.Learning.Dataset import JointsDataset1, Normalizer
 from torch.utils.data import DataLoader
+from kincalib.Metrics import ExperimentMetrics, MetricsCalculator
 
 # Hack to add structured configs to python path - If there is any change on the
 # directory name or python file name, this will break
@@ -32,6 +34,8 @@ class DatasetContainer:
     test_dataset: JointsDataset1
     train_dataloader: DataLoader
     test_dataloader: DataLoader
+    input_normalizer: Normalizer
+    output_normalizer: Normalizer
 
 
 def load_data(cfg: ExperimentConfig) -> DatasetContainer:
@@ -84,19 +88,31 @@ def load_data(cfg: ExperimentConfig) -> DatasetContainer:
     )
 
     return DatasetContainer(
-        train_dataset, test_dataset, train_dataloader, test_dataloader
+        train_dataset,
+        test_dataset,
+        train_dataloader,
+        test_dataloader,
+        input_normalizer,
+        output_normalizer,
     )
 
 
-def train_model(cfg: ExperimentConfig, dataset_container: DatasetContainer):
-    output_path = Path(cfg.output_path)
+def create_model(cfg: ExperimentConfig, dataset_container: DatasetContainer):
     in_features = dataset_container.train_dataset.get_input_dim()
     model = BestMLP2(in_features=in_features)
-    model.train()
-    optimizer = torch.optim.Adam(model.parameters(), lr=cfg.train_config.lr)
 
     if cfg.global_device:
-        net = model.cuda()
+        model = model.cuda()
+
+    return model
+
+
+def train_model(
+    cfg: ExperimentConfig, dataset_container: DatasetContainer, model: BestMLP2
+):
+    output_path = Path(cfg.output_path)
+    model.train()
+    optimizer = torch.optim.Adam(model.parameters(), lr=cfg.train_config.lr)
 
     loss_metric = torch.nn.MSELoss()
 
@@ -136,6 +152,52 @@ def show_training_plots(trainer: Trainer):
     plt.show()
 
 
+def load_best_weights(model: BestMLP2, cfg: ExperimentConfig):
+    log.info(f"Loading weights from {cfg.output_path}")
+    model.load_state_dict(torch.load(Path(cfg.output_path) / "final_weights.pth"))
+    return model
+
+
+def calculate_test_metrics(
+    cfg: ExperimentConfig, model: BestMLP2, dataset_container: DatasetContainer
+) -> ExperimentMetrics:
+    model.eval()
+
+    with torch.no_grad():
+        pred_offsets = []
+        gt_offsets = []
+        input_jp = []
+
+        input_normalizer = dataset_container.input_normalizer
+        out_normalizer = dataset_container.output_normalizer
+
+        for X, Y in dataset_container.test_dataloader:
+            X = X.cuda()
+            Y = Y.cuda()
+            Y_hat = model(X)
+
+            X = input_normalizer.reverse(X.cpu())
+            Y_hat = out_normalizer.reverse(Y_hat.cpu())
+            Y = out_normalizer.reverse(Y.cpu())
+
+            pred_offsets.append(Y_hat.numpy())
+            gt_offsets.append(Y.numpy())
+            input_jp.append(X.numpy()[:, :6])  # Only joint positions
+
+    input_jp = np.concatenate(input_jp, axis=0)
+    pred_offsets = np.concatenate(pred_offsets, axis=0)
+    gt_offsets = np.concatenate(gt_offsets, axis=0)
+
+    metrics_calc = MetricsCalculator(
+        experiment_name=cfg.dataset_config.dataset_type,
+        input_jp=input_jp,
+        gt_offset=gt_offsets,
+        pred_offset=pred_offsets,
+    )
+    metrics_container = metrics_calc.get_metrics_container()
+    return metrics_container
+
+
 @hydra.main(
     version_base=None,
     config_path="./train_test_simple_net_confs/",
@@ -146,11 +208,16 @@ def main(cfg: ExperimentConfig):
     print(OmegaConf.to_yaml(cfg))
 
     dataset_container = load_data(cfg)
-    # model = create_model(cfg, dataset_container)
+    model = create_model(cfg, dataset_container)
 
     if cfg.actions.train:
-        trainer = train_model(cfg, dataset_container)
+        trainer = train_model(cfg, dataset_container, model)
         show_training_plots(trainer)
+
+    if cfg.actions.test:
+        model = load_best_weights(model, cfg)
+        exp_metrics = calculate_test_metrics(cfg, model, dataset_container)
+        exp_metrics.to_table().print()
 
     # from hydra.core.hydra_config import HydraConfig
     # print(HydraConfig.get().job.config_name)
