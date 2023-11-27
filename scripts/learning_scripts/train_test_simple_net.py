@@ -160,7 +160,7 @@ def load_best_weights(model: BestMLP2, cfg: ExperimentConfig):
 
 def calculate_test_metrics(
     cfg: ExperimentConfig, model: BestMLP2, dataset_container: DatasetContainer
-) -> ExperimentMetrics:
+) -> MetricsCalculator:
     model.eval()
 
     with torch.no_grad():
@@ -194,8 +194,7 @@ def calculate_test_metrics(
         gt_offset=gt_offsets,
         pred_offset=pred_offsets,
     )
-    metrics_container = metrics_calc.get_metrics_container()
-    return metrics_container
+    return metrics_calc
 
 
 @hydra.main(
@@ -216,7 +215,8 @@ def main(cfg: ExperimentConfig):
 
     if cfg.actions.test:
         model = load_best_weights(model, cfg)
-        exp_metrics = calculate_test_metrics(cfg, model, dataset_container)
+        calc_metrics = calculate_test_metrics(cfg, model, dataset_container)
+        exp_metrics = calc_metrics.get_metrics_container()
         exp_metrics.to_table().print()
 
     # from hydra.core.hydra_config import HydraConfig
