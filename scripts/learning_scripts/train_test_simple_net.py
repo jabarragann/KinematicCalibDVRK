@@ -219,6 +219,17 @@ def main(cfg: ExperimentConfig):
         exp_metrics = calc_metrics.get_metrics_container()
         exp_metrics.to_table().print()
 
+        # Metrics with no corrections
+        calc_metrics2 = MetricsCalculator(
+            calc_metrics.experiment_name,
+            calc_metrics.input_jp,
+            calc_metrics.gt_offset,
+            np.zeros_like(calc_metrics.gt_offset),
+        )
+        exp_metrics2 = calc_metrics2.get_metrics_container()
+        log.info(f"Error with no corrections - {exp_metrics2.experiment_name}")
+        exp_metrics2.to_table(with_jp=False).print(floatfmt=".5f")
+
     # from hydra.core.hydra_config import HydraConfig
     # print(HydraConfig.get().job.config_name)
     # print(HydraConfig.get().runtime.output_dir)
