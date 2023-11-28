@@ -5,10 +5,13 @@ from natsort import natsorted
 
 
 @click.command()
-@click.option("--data_dir", type=click.Path(exists=True,file_okay=False, path_type=Path),required=True,
-               help="Directory containing the data")
+@click.option(
+    "--data_dir",
+    type=click.Path(exists=True, file_okay=False, path_type=Path),
+    required=True,
+    help="Directory containing the data",
+)
 def merge_data(data_dir):
-
     data_files = []
     files = natsorted(list(data_dir.glob("record_*.csv")))
     for f in files:
@@ -21,7 +24,6 @@ def merge_data(data_dir):
     final_df = final_df.reset_index(drop=True)
     final_df.to_csv(data_dir / "combined_data.csv", index=False)
 
+
 if __name__ == "__main__":
     merge_data()
-
-
