@@ -7,6 +7,9 @@ rich
 roboticstoolbox-python
 scikit-learn
 tabulate
+hydra-core
+click
+tqdm
 --extra-index-url https://rospypi.github.io/simple/
 rospy
 tf2-ros
