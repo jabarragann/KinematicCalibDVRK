@@ -1,6 +1,6 @@
 defaults:
   - base_config
-  - path_config/juanubuntu
+  - path_config/juanubuntu_dataset5
   - override hydra/job_logging: none
   - override hydra/hydra_logging: none
   - _self_

@@ -1,0 +1,10 @@
+# global workspace
+workspace: "/home/juan1995/research_juan/accelnet_grant/dvrk_kinematic_error_models"
+
+train_paths:
+  - ${..workspace}/data/experiments/data_collection3/combined/dataset1.csv
+  - ${..workspace}/data/experiments/data_collection3/combined/dataset3.csv
+  - ${..workspace}/data/experiments/data_collection3/combined/dataset4.csv
+
+test_paths:
+  - "${..workspace}/data/experiments/data_collection3/combined/dataset2.csv"
