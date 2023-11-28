@@ -34,6 +34,10 @@ find data/experiments/data_collection4/ -maxdepth 1 -type f -name '*raw_sensor*'
 ```
 
 4. Train models with actual states files. 
+Select a dataset from a config group with +GROUP=OPTION
+```bash
+python scripts/learning_scripts/train_test_simple_net.py +path_config=juanubuntu_dataset4
+```
 
 5. Test models with either `raw_sensor` files or `actual_state` files 
 
