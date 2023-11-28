@@ -52,7 +52,7 @@ def plot_robot_error(experimental_data: RobotPosesContainer):
         bins=30,
     )
 
-    plt.show()
+    # plt.show()
 
 
 def plot_correction_offset(experimental_data: RobotPosesContainer):
@@ -92,13 +92,18 @@ def plot_correction_offset(experimental_data: RobotPosesContainer):
     default=None,
     help="if it is not provided use data_file parent dir",
 )
-@click.option("--out_name", type=str, default="filtered_dataset.csv")
+@click.option("--out_name", type=str, default=None)
 def analyze_robot_error(data_file, handeye_file, out_dir, out_name):
-    log.info(f"Analyzing experiment {data_file.parent.name}")
+    log.info(f"Analyzing experiment {data_file.parent.name}/{data_file.name}")
 
     real_robot_poses = RobotPosesContainer.create_from_real_measurements(
         file_path=data_file, hand_eye_file=handeye_file
     )
+
+    if out_name is None:
+        assert "raw_sensor" in data_file.name, "data_file name must contain raw_sensor"
+        out_name = data_file.name.replace("raw_sensor", "actual_state")
+
     if out_dir is None:
         real_robot_poses.filter_and_save_to_record(
             output_path=data_file.parent / out_name
