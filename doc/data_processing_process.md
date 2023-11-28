@@ -38,10 +38,16 @@ Select a dataset from a config group with +GROUP=OPTION
 ```bash
 python scripts/learning_scripts/train_test_simple_net.py +path_config=juanubuntu_dataset4
 ```
+5. Test models with actual_state files
 
-5. Test models with either `raw_sensor` files or `actual_state` files 
+Choose the config dir that was created when running traning script
+```bash
+python scripts/learning_scripts/test_simple_net.py --config_path outputs_hydra/train_test_simple_net_20231127_222220
+```
 
-6. Sanity check: compare that hand-eye calibration calculated with only data from a rosbag trajectory will lead to the same values. Make sure that marker was not moved during collection
+6. Test models with either `raw_sensor` files 
+
+7. Sanity check (optional): compare that hand-eye calibration calculated with only data from a rosbag trajectory will lead to the same values. Make sure that marker was not moved during collection
 
 ```bash
 python scripts/util_scripts/calc_hand_eye_differences.py --path1 data/experiments/data_collection4_orig/15-11-2023-19-19-00 --path2 data/experiments/data_collection4_orig/15-11-2023-18-08-28
