@@ -3,6 +3,7 @@ from dataclasses import dataclass
 import json
 from pathlib import Path
 from typing import Any, Dict, Tuple
+import click
 import pandas as pd
 
 import torch
@@ -19,6 +20,10 @@ import seaborn as sns
 from kincalib.Calibration import RobotPosesContainer
 from kincalib.Motion.IkUtils import calculate_fk
 import numpy as np
+from omegaconf import OmegaConf
+
+# Structured config files for the training script
+from train_test_simple_net_confs.structured_confs import ExperimentConfig
 
 log = Logger(__name__).log
 
@@ -230,22 +235,32 @@ def load_dataset_config(model_path: Path) -> Dict[str, Any]:
     return cfg_dict
 
 
-def reduce_pose_error_with_nn():
-    # fmt:off
-    # test_data_path = "./data/experiments/data_collection3/combined/record_001_2.csv"
-    test_data_path = "./data/experiments/data_collection3/combined/bag1_traj_1.csv"
-    hand_eye_path = "./data/experiments/data_collection3/combined/hand_eye_calib.json"
+@click.command()
+@click.option(
+    "--model_path",
+    type=click.Path(exists=True, file_okay=False, path_type=Path),
+    default="outputs_hydra/train_test_simple_net_20231129_200704",
+)
+@click.option(
+    "--test_data_name",
+    type=str,
+    default="raw_sensor_rosbag_09_traj3.csv",
+    help="Name of trajectory to use. This file needs to be in the datapath",
+)
+def reduce_pose_error_with_nn(model_path, test_data_name):
+    # Load config from experiment
+    log.info(f"Loading model from {model_path}")
+    cfg: ExperimentConfig  # For Duck typing
+    cfg = OmegaConf.load(model_path / ".hydra/config.yaml")
+    cfg_hydra = OmegaConf.load(model_path / ".hydra/hydra.yaml")
+    cfg.output_path = cfg_hydra.hydra.runtime.output_dir
 
-    # model_path = "./outputs_hydra/train_test_simple_net_20231118_214536" # measured-setpoint
-    # # model_path = "./outputs_hydra/train_test_simple_net_20231118_214647" # actual-measured
-
-    # model_path = "outputs_hydra/train_test_simple_net_20231126_131719" # measured-setpoint
-    model_path = "outputs_hydra/train_test_simple_net_20231126_131857" # actual-measured
-    # fmt:on
-
-    test_data_path = Path(test_data_path)
-    hand_eye_path = Path(hand_eye_path)
+    # Load data
+    test_data_path = Path(cfg.path_config.datapath) / test_data_name
+    hand_eye_path = Path(cfg.path_config.handeye_path)
     model_path = Path(model_path)
+    log.info(f"Hand eye calib path: {hand_eye_path}")
+    log.info(f"Load trajectory {test_data_path}")
 
     cfg_dict = load_dataset_config(model_path)
     dataset_type = cfg_dict["dataset_type"]

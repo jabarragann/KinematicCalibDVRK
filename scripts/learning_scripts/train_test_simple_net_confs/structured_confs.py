@@ -34,9 +34,11 @@ class DatasetConfig:
 
 @dataclass
 class PathConfig:
-    workspace: str
-    train_paths: List[str]
-    test_paths: List[str]
+    workspace: Path
+    datapath: Path
+    handeye_path: Path
+    train_paths: List[Path]
+    test_paths: List[Path]
 
 
 @dataclass

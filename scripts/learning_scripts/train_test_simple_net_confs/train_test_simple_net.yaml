@@ -1,6 +1,6 @@
 defaults:
   - base_config
-  - path_config/juanubuntu_dataset5
+  - path_config/juanubuntu_dataset4
   - override hydra/job_logging: none
   - override hydra/hydra_logging: none
   - _self_
@@ -19,9 +19,9 @@ dataset_config:
   include_prev_measured: true
 
 train_config:
-  batch_size: 32
-  epochs: 150
-  lr: 0.0008
+  batch_size: 8
+  epochs: 500
+  lr: 0.0005
   log_interval: 1
 
 actions:
