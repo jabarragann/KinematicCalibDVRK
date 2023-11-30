@@ -2,7 +2,7 @@ import torch
 from torch import nn
 
 
-class BestMLP2(nn.Module):
+class BestMLP1(nn.Module):
     def __init__(self, in_features) -> None:
         super().__init__()
         layers = []
@@ -11,6 +11,24 @@ class BestMLP2(nn.Module):
         layers.append(nn.ReLU())
         layers.append(nn.Dropout(0.00929993824427144))
         layers.append(nn.Linear(140, 6))
+
+        self.model = nn.Sequential(*layers)
+
+    def forward(self, x):
+        return self.model(x)
+
+
+class BestMLP2(nn.Module):
+    def __init__(self, in_features: int):
+        super().__init__()
+        layers = []
+        layers.append(nn.Linear(in_features, 16))
+        layers.append(nn.ReLU())
+        layers.append(nn.Dropout(0.00929993824427144))
+        layers.append(nn.Linear(16, 32))
+        layers.append(nn.ReLU())
+        layers.append(nn.Dropout(0.00929993824427144))
+        layers.append(nn.Linear(32, 6))
 
         self.model = nn.Sequential(*layers)
 
