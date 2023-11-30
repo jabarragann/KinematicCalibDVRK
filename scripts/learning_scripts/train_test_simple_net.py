@@ -134,6 +134,27 @@ def train_model(
     return trainer
 
 
+def save_valid_loss_npy(cfg: ExperimentConfig, trainer: Trainer):
+    data = np.array(trainer.valid_epoch_loss_list)
+    fname = (
+        "test_lr"
+        + str(cfg.train_config.lr)
+        + "_bs"
+        + str(cfg.train_config.batch_size)
+        + ".npy"
+    )
+    output_path = Path(cfg.output_path) / fname
+    results_path = (
+        Path("./results/" + cfg.dataset_config.dataset_type + "/valid_loss/lr_vs_bs")
+        / fname
+    )
+    results_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_path, "wb") as f:
+        np.save(f, data)
+    with open(results_path, "wb") as f:
+        np.save(f, data)
+
+
 def show_training_plots(trainer: Trainer):
     fig, ax = plt.subplots(1, 2)
     ax[0].plot(trainer.train_epoch_loss_list, label="train")
@@ -212,6 +233,7 @@ def main(cfg: ExperimentConfig):
     if cfg.actions.train:
         trainer = train_model(cfg, dataset_container, model)
         show_training_plots(trainer)
+        save_valid_loss_npy(cfg, trainer)
 
     if cfg.actions.test:
         model = load_best_weights(model, cfg)

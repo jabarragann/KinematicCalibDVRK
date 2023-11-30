@@ -16,6 +16,7 @@ data/
 .vs
 outputs
 outputs_hydra
+results
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
