@@ -38,3 +38,18 @@ python scripts/data_collection_scripts/calculate_robot_real_pose.py  \
 --data_file ./data/experiments/data_collection3/soft_traj4/record_001.csv \
 --handeye_file ./data/experiments/data_collection3/combined/hand_eye_calib.json \
 --out_name  dataset4.csv
+
+#---------------------------------------------------------------
+# Test network on trajectory 
+#---------------------------------------------------------------
+
+## Good results -> tres traj: raw_sensor_rosbag_08_traj1.csv, raw_sensor_rosbag_09_traj3.csv
+## measured-setpoint model
+python scripts/learning_scripts/test_network_on_trajectory.py \
+--model_path outputs_hydra/train_test_simple_net_20231129_210838 \
+--test_data_name raw_sensor_rosbag_09_traj3.csv 
+
+## actual-measured model
+python scripts/learning_scripts/test_network_on_trajectory.py \
+--model_path outputs_hydra/train_test_simple_net_20231129_202216 \
+--test_data_name raw_sensor_rosbag_09_traj3.csv 
