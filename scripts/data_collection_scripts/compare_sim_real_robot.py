@@ -15,6 +15,8 @@ log = Logger(__name__).log
 
 @dataclass
 class ExperimentalData:
+    setpoint_jp: np.ndarray
+    setpoint_cp: np.ndarray
     measured_jp: np.ndarray
     measured_cp: np.ndarray
 
@@ -28,8 +30,11 @@ class ExperimentalData:
         record_dict = RealDataRecorder.create_records()
         data_dict = SensorsDataReader(file_path, record_dict).data_dict
 
-        return cls(
-            measured_jp=data_dict["measured_jp"], measured_cp=data_dict["measured_cp"]
+        return ExperimentalData(
+            setpoint_jp=data_dict["setpoint_jp"],
+            setpoint_cp=data_dict["setpoint_cp"],
+            measured_jp=data_dict["measured_jp"],
+            measured_cp=data_dict["measured_cp"],
         )
 
 
@@ -44,8 +49,6 @@ def plot_measured_jp(robot_data: ExperimentalData, sim_data: ExperimentalData):
 
     ax[0, 0].legend()
     [a.grid() for a in ax.flatten()]
-
-    plt.show()
 
 
 def plot_cartesian_errors(robot_data: ExperimentalData, sim_data: ExperimentalData):
@@ -65,7 +68,33 @@ def plot_cartesian_errors(robot_data: ExperimentalData, sim_data: ExperimentalDa
 
     [a.grid() for a in ax.flatten()]
 
-    plt.show()
+
+def plot_controller_errors(robot_data: ExperimentalData, sim_data: ExperimentalData):
+    real_controller_err_p = calculate_position_error(
+        T_RG=robot_data.measured_cp, T_RG_actual=robot_data.setpoint_cp
+    )
+    real_controller_err_r = calculate_orientation_error(
+        T_RG=robot_data.measured_cp, T_RG_actual=robot_data.setpoint_cp
+    )
+
+    sim_controller_err_p = calculate_position_error(
+        T_RG=sim_data.measured_cp, T_RG_actual=sim_data.setpoint_cp
+    )
+    sim_controller_err_r = calculate_orientation_error(
+        T_RG=sim_data.measured_cp, T_RG_actual=sim_data.setpoint_cp
+    )
+
+    fig, ax = plt.subplots(2, 1, sharex=True)
+    fig.suptitle("Difference between real and simulated robot")
+    ax[0].plot(real_controller_err_p, label="real")
+    ax[0].plot(sim_controller_err_p, label="sim")
+    ax[0].set_title("Cartesian error (mm)")
+    ax[1].plot(real_controller_err_r, label="real")
+    ax[1].plot(sim_controller_err_r, label="sim")
+    ax[1].set_title("Rot error (deg)")
+
+    [a.grid() for a in ax.flatten()]
+    ax[0].legend()
 
 
 def analyze_robot_error():
@@ -84,6 +113,9 @@ def analyze_robot_error():
 
     # plot_measured_jp(robot_data, sim_data)
     plot_cartesian_errors(robot_data, sim_data)
+    plot_controller_errors(robot_data, sim_data)
+
+    plt.show()
 
 
 if __name__ == "__main__":
