@@ -247,7 +247,12 @@ def load_dataset_config(model_path: Path) -> Dict[str, Any]:
     default="raw_sensor_rosbag_09_traj3.csv",
     help="Name of trajectory to use. This file needs to be in the datapath",
 )
-def reduce_pose_error_with_nn(model_path, test_data_name):
+@click.option(
+    "--output_path",
+    type=click.Path(path_type=Path),
+    default=None,
+)
+def reduce_pose_error_with_nn(model_path, test_data_name, output_path):
     # Load config from experiment
     log.info(f"Loading model from {model_path}")
     cfg: ExperimentConfig  # For Duck typing
@@ -299,6 +304,14 @@ def reduce_pose_error_with_nn(model_path, test_data_name):
         poses1_cp, poses2_cp, poses2_cp_approximate, poses1_name, poses2_name
     )
     plot_correction_offset(poses1_jp, poses2_jp, poses2_jp_approximate)
+
+    if output_path is not None:
+        output_path.mkdir(parents=True, exist_ok=True)
+        np.save(output_path / f"poses1_jp_{dataset_type}.npy", poses1_jp)
+        np.save(output_path / f"poses2_jp_{dataset_type}.npy", poses2_jp)
+        np.save(
+            output_path / f"poses2_jp_pred_{dataset_type}.npy", poses2_jp_approximate
+        )
 
 
 if __name__ == "__main__":
