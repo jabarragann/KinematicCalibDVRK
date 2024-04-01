@@ -46,10 +46,27 @@ python scripts/data_collection_scripts/calculate_robot_real_pose.py  \
 ## Good results -> tres traj: raw_sensor_rosbag_08_traj1.csv, raw_sensor_rosbag_09_traj3.csv
 ## measured-setpoint model
 python scripts/learning_scripts/test_network_on_trajectory.py \
---model_path outputs_hydra/train_test_simple_net_20231129_210838 \
+--model_path outputs_hydra/train_test_simple_net_20231129_214006 \
 --test_data_name raw_sensor_rosbag_09_traj3.csv 
 
 ## actual-measured model
 python scripts/learning_scripts/test_network_on_trajectory.py \
 --model_path outputs_hydra/train_test_simple_net_20231129_202216 \
 --test_data_name raw_sensor_rosbag_09_traj3.csv 
+
+
+#---------------------------------------------------------------
+# Best models - plots for paper
+#---------------------------------------------------------------
+
+# measured-setpoint
+python scripts/learning_scripts/test_network_on_trajectory.py \
+--test_data_name raw_sensor_rosbag_09_traj3.csv \
+--model_path outputs_hydra/train_test_simple_net_20231201_123942 \
+--output_path results/paper_plots1
+
+# actual-measured
+python scripts/learning_scripts/test_network_on_trajectory.py \
+--test_data_name raw_sensor_rosbag_09_traj3.csv \
+--model_path outputs_hydra/train_test_simple_net_20231201_124659 \
+--output_path results/paper_plots1

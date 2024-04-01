@@ -13,9 +13,12 @@ global_device: "cuda"
 traj_type: "rosbag"
 
 workspace: "/home/juan1995/research_juan/accelnet_grant/dvrk_kinematic_error_models"
-rosbag_path: ./data/dvrk_recorded_motions/pitch_exp_traj_01_test_cropped.bag
-nn_measured_setpoint_path: ./outputs_hydra/train_test_simple_net_20231118_214536 #measured-setpoint
-nn_actual_measured_path: ./outputs_hydra/train_test_simple_net_20231118_214647 #actual-measured
-# test_data_path: "./data/experiments/data_collection3/combined/record_001_2.csv"
-test_data_path: ${.workspace}/data/experiments/data_collection3/combined/bag1_traj_1.csv
-hand_eye_path: ${.workspace}/data/experiments/data_collection3/combined/hand_eye_calib.json
+datapath: ${.workspace}/data/experiments/data_collection4
+nn_measured_setpoint_path: outputs_hydra/train_test_simple_net_20231201_123942 #measured-setpoint
+nn_actual_measured_path: outputs_hydra/train_test_simple_net_20231201_124659 #actual-measured
+# test_data_path: ${.datapath}/raw_sensor_rosbag_08_traj2.csv
+test_data_path: ${.datapath}/raw_sensor_rosbag_09_traj3.csv
+hand_eye_path: ${.datapath}/combined_softs/hand_eye_calib.json
+
+dataset_config:
+  include_prev_measured: true

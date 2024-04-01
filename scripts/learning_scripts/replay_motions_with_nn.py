@@ -33,7 +33,6 @@ class ValidateConfig:
 
     def __post_init__(self):
         self.validate_nn_conf()
-        self.validate_rosbag_path()
         self.validate_test_data()
         log.info("Configuration is valid")
 
@@ -44,11 +43,6 @@ class ValidateConfig:
         assert (
             self.cfg.hand_eye_path.exists()
         ), f"Hand eye path {self.cfg.hand_eye_path} does not exist"
-
-    def validate_rosbag_path(self):
-        assert (
-            self.cfg.rosbag_path.exists()
-        ), f"File {self.cfg.rosbag_path} does not exist"
 
     def validate_nn_conf(self):
         self.is_neural_net_trained_with(
@@ -74,11 +68,13 @@ def load_noise_generators(
         cfg.nn_measured_setpoint_path / "final_weights.pth",
         cfg.nn_measured_setpoint_path / "input_normalizer.json",
         cfg.nn_measured_setpoint_path / "output_normalizer.json",
+        12,
     )
     nn2_actual_measured = NetworkNoiseGenerator.create_from_files(
         cfg.nn_actual_measured_path / "final_weights.pth",
         cfg.nn_actual_measured_path / "input_normalizer.json",
         cfg.nn_actual_measured_path / "output_normalizer.json",
+        12,
     )
     return nn1_measured_setpoint, nn2_actual_measured
 
@@ -107,18 +103,23 @@ def generate_error_hist(
 
 
 def calculate_simulated_poses(
+    cfg: AppConfig,
     real_robot_poses: RobotPosesContainer,
     nn1_measured_setpoint: NetworkNoiseGenerator,
     nn2_actual_measured: NetworkNoiseGenerator,
 ):
     approximated_measured_jp, alpha1 = nn1_measured_setpoint.corrupt_jp_batch(
-        real_robot_poses.setpoint_jp
+        real_robot_poses.setpoint_jp,
+        real_robot_poses.prev_measured_jp["measured_jp_tminus1"],
+        cfg.dataset_config,
     )
 
     # approximated_measured_jp should be returned instead of ambf.measured_jp()
     # approximated_measured_jp = robot_poses.setpoint_jp + alpha1
     approximated_actual_jp, alpha2 = nn2_actual_measured.corrupt_jp_batch(
-        approximated_measured_jp
+        approximated_measured_jp,
+        real_robot_poses.prev_measured_jp["measured_jp_tminus1"],
+        cfg.dataset_config,
     )
     # Corrupted setpoints are given to ambf.move_jp() command
     corrupted_setpoints2 = real_robot_poses.setpoint_jp + alpha1 + alpha2
@@ -196,19 +197,25 @@ def main(cfg: AppConfig):
     real_robot_poses = load_robot_poses(cfg.test_data_path, cfg.hand_eye_path)
 
     simulated_robot_poses1 = calculate_simulated_poses(
-        real_robot_poses, nn1_measured_setpoint, nn2_actual_measured
+        cfg, real_robot_poses, nn1_measured_setpoint, nn2_actual_measured
     )
 
     generate_error_hist(real_robot_poses, simulated_robot_poses1)
 
-    # simulated_robot_poses2 = replay_motions(cfg, simulated_robot_poses1)
+    simulated_robot_poses2 = replay_motions(cfg, simulated_robot_poses1)
 
-    # # fmt: off
-    # # Disable filter by raising the thresholds
-    # real_robot_poses.filter_and_save_to_record(cfg.output_path / "real_robot_poses.csv", pos_error_threshold=800, orientation_error_threshold=1000)
-    # simulated_robot_poses1.filter_and_save_to_record(cfg.output_path / "simulated_robot_poses1.csv", pos_error_threshold=800, orientation_error_threshold=1000)
-    # simulated_robot_poses2.filter_and_save_to_record(cfg.output_path / "simulated_robot_poses2.csv", pos_error_threshold=800, orientation_error_threshold=1000)
-    # # fmt: on
+    # fmt: off
+    # Disable filter by raising the thresholds
+    real_robot_poses.filter_and_save_to_record(
+        cfg.output_path / "real_robot_poses.csv", pos_error_threshold=800, orientation_error_threshold=1000,
+    )
+    simulated_robot_poses1.filter_and_save_to_record( 
+        cfg.output_path / "simulated_robot_poses1.csv", pos_error_threshold=800, orientation_error_threshold=1000,
+    )
+    simulated_robot_poses2.filter_and_save_to_record( 
+        cfg.output_path / "simulated_robot_poses2.csv", pos_error_threshold=800, orientation_error_threshold=1000,
+    )
+    # fmt: on
 
 
 if __name__ == "__main__":

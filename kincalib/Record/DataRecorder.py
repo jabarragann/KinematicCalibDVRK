@@ -239,7 +239,7 @@ class RobotPosesDataReader(AbstractCSVDataReader):
         self.df = self.df.dropna()
         self.df = self.df.reset_index(drop=True)
 
-        prefix = "tminus1_measured"
+        prefix = "tminus1_measured_"
         measured_jp_tminus1 = JointRecord("measured_jp_tminus1", prefix)
         self.record_dict["measured_jp_tminus1"] = measured_jp_tminus1
 

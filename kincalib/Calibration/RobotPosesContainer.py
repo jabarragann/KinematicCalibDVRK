@@ -4,7 +4,11 @@ from typing import Dict, List
 
 import pandas as pd
 import kincalib
-from kincalib.Record.DataRecorder import SensorsDataReader, RealDataRecorder
+from kincalib.Record.DataRecorder import (
+    RobotPosesDataReader,
+    SensorsDataReader,
+    RealDataRecorder,
+)
 from kincalib.Record.Record import JointRecord
 from kincalib.Transforms.Rotation import Rotation3D
 from kincalib.utils.Logger import Logger
@@ -169,9 +173,14 @@ class RobotPosesContainer:
                 records_dict["actual_cp"].add_data( self.index_array[i], self.actual_cp[:, :, i])
                 records_dict["measured_setpoint_error"].add_data(self.index_array[i], measured_setpoint_error)
                 records_dict["actual_measured_error"].add_data(self.index_array[i], actual_measured_error)
-                records_dict["measured_jp_tminus1"].add_data(
-                    self.index_array[i], self.prev_measured_jp["measured_jp_tminus1"][i]
-                )
+                if self.prev_measured_jp is not None:
+                    records_dict["measured_jp_tminus1"].add_data(
+                        self.index_array[i], self.prev_measured_jp["measured_jp_tminus1"][i]
+                    )
+                else:
+                    records_dict["measured_jp_tminus1"].add_data(
+                        self.index_array[i], np.zeros_like(self.measured_jp[i]) 
+                    )
                 # fmt:on
 
         saver = records.RecordCollectionCsvSaver(output_path.parent)
@@ -200,6 +209,7 @@ class RobotPosesContainer:
             measured_cp,
             actual_cp,
             setpoint_cp,
+            prev_measured_jp=None,
         )
         return instance
 
@@ -251,7 +261,7 @@ class RobotPosesContainer:
         # Reader does not have any method to read this type of records
         del record_dict["measured_setpoint_error"]
         del record_dict["actual_measured_error"]
-        data_dict = SensorsDataReader(file_path, record_dict).data_dict
+        data_dict = RobotPosesDataReader(file_path, record_dict).data_dict
 
         return RobotPosesContainer(
             robot_type,
@@ -262,6 +272,7 @@ class RobotPosesContainer:
             setpoint_cp=data_dict["setpoint_cp"],
             measured_cp=data_dict["measured_cp"],
             actual_cp=data_dict["actual_cp"],
+            prev_measured_jp=None,
         )
 
     @classmethod
