@@ -1,4 +1,4 @@
-# Kinematic error model of dVRK robot
+# Improving the realism of robotic surgery simulation through injection of learning-based estimated errors
 
 
 ## Installation of crtk packages in virtual env
@@ -60,4 +60,8 @@ List of atracsys topics
 import roboticstoolbox
 ```
 
+## Citation
 
+```
+
+```
