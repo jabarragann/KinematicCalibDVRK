@@ -28,8 +28,8 @@ def pose_msg_2_ndarray(msg: PoseStamped) -> np.ndarray:
 
 
 class Rostopics(Enum):
-    MEASURED_CP = ("measured_cp", PoseStamped, pose_msg_2_ndarray)
-    MEASURED_JP = ("measured_js", JointState, js_msg_2_ndarray)
+    MEASURED_CP = ("measured_cp", "local/measured_cp", PoseStamped, pose_msg_2_ndarray)
+    MEASURED_JP = ("measured_js", "measured_js", JointState, js_msg_2_ndarray)
 
 
 class RosSyncClient:
@@ -39,10 +39,10 @@ class RosSyncClient:
         self.idx = 0
 
         for topic in Rostopics:
-            full_topic_name = namespace + topic.value[0]
+            full_topic_name = namespace + topic.value[1]
             print("Subscribing to", full_topic_name)
             self.subscribers.append(
-                message_filters.Subscriber(full_topic_name, topic.value[1])
+                message_filters.Subscriber(full_topic_name, topic.value[2])
             )
 
         # WARNING: TimeSynchronizer did not work. Use ApproximateTimeSynchronizer instead.
@@ -61,7 +61,7 @@ class RosSyncClient:
 
         for msg, topic in zip(inputs, Rostopics):
             topic_name = topic.value[0]
-            cb = topic.value[2]
+            cb = topic.value[3]
             self.record_dict[topic_name].add_data(self.idx, cb(msg))
 
         self.idx += 1
