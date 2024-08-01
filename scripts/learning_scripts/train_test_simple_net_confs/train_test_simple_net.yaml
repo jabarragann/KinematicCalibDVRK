@@ -15,7 +15,7 @@ output_path: ${hydra:runtime.output_dir}
 global_device: "cuda"
 
 dataset_config:
-  dataset_type: "measured-setpoint" # either "measured-setpoint" or "actual-measured"
+  dataset_type: "actual-measured" # either "measured-setpoint" or "actual-measured"
   include_prev_measured: true
 
 train_config:

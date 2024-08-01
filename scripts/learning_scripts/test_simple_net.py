@@ -31,7 +31,7 @@ def plot_offsets(gt_offset, pred_offset):
 @click.option(
     "--config_path",
     type=click.Path(exists=True, file_okay=False, path_type=Path),
-    default="outputs_hydra/train_test_simple_net_20231126_201702",
+    default="outputs_hydra/train_test_simple_net_20240801_113517",
 )
 def test_network(config_path: Path):
     cfg: ExperimentConfig  # For Duck typing
