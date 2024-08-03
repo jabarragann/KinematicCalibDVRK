@@ -1,9 +1,12 @@
 # Improving the realism of robotic surgery simulation through injection of learning-based estimated errors
 
-## Setup environment - Last modified on August 01, 2024
+## Setup environment - Last modified on August 03, 2024
 
-The following code base requires a virtual environment to work. This code was tested with anaconda virtual environment.
 
+* This code was tested with an anaconda virtual environment.
+* Requires surgical robotics challenge version: 2.0.0
+
+Installation of error injection code base.
 ```bash
 conda create -n ki_err python=3.10 numpy
 # The following command might install other pytorch version in the future. For now it is pytorch 2.4.0
@@ -14,13 +17,8 @@ pip install -r requirements_ros.txt # install ros dependencies - PYKDL needs to 
 pip install -e . # install our package
 ```
 
-Note: if ros_requirements fails, you install all the software in your main python interpreter.
+Note: if installation of the `ros_requirements` fails, you can also install all the software in your main python interpreter that contains your native ROS installation.
 
-Install old version of surgical robotics challenge. This code base uses the FK and IK of the SRC. I will try to updated to the new version soon. For now unfortunately you need to install my fork.
-```bash
-git clone https://github.com/jabarragann/surgical_robotics_challenge.git
-git checkout -b fk_patch origin/fk_patch
-```
 
 ## Deep learning model scripts 
 
