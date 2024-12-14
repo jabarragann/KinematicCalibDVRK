@@ -4,7 +4,6 @@ import numpy as np
 
 log = Logger(__name__).log
 
-
 def batch_calculate_ik(
     measured_cp: np.ndarray, kinematic_model: DvrkPsmKin_SRC
 ) -> np.ndarray:

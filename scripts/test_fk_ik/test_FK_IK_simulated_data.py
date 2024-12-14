@@ -29,6 +29,7 @@ js_traj = JointSpaceTrajectory(
     num_joints=7, num_traj_points=50, joint_limits=joint_lims)
 num_points = js_traj.get_num_traj_points()
 num_joints = 6
+
 for i in range(num_points):
     test_q = js_traj.get_traj_at_point(i)
     T_7_0 = kin_model.compute_FK(test_q, 7)
@@ -43,7 +44,7 @@ for i in range(num_points):
     print(i, ': Joint Errors from IK Solver')
     error_str = ""
     for i in range(len(errors)):
-        errors[i] = round(errors[i], 4)
+        errors[i] = round(errors[i], 2)
         if errors[i] == 0.0:
             error_str = error_str + " " + bcolors.OKGREEN + \
                 str(errors[i]) + bcolors.ENDC

@@ -1,0 +1,13 @@
+# global workspace
+workspace: "/home/juan95/research/accelnet_grant/KinematicCalibDVRK"
+datapath: "${.workspace}/data/processed_data/data_collection4"
+handeye_path: "${.datapath}/combined_softs/hand_eye_calib.json"
+train_paths:
+  - ${..datapath}/actual_state_soft_01.csv
+  - ${..datapath}/actual_state_soft_02.csv
+  - ${..datapath}/actual_state_soft_04.csv
+  - ${..datapath}/actual_state_soft_05.csv
+  - ${..datapath}/actual_state_soft_11.csv
+
+test_paths:
+  - "${..datapath}/actual_state_soft_07.csv"
