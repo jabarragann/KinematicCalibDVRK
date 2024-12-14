@@ -3,11 +3,11 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path
 import time
-from typing import Callable, Dict, List
+from typing import Callable, Dict, List, Any
 import numpy as np
 import pandas as pd
 from tf_conversions import posemath as pm
-from dvrk import psm
+# from dvrk import psm
 from kincalib.Transforms.Rotation import Rotation3D
 from kincalib.utils.Logger import Logger
 from kincalib.Sensors import FusionTrackAbstract, MarkerPoseMeasurement
@@ -30,7 +30,7 @@ class RealDataRecorder:
     """
 
     marker_name: str
-    robot_handle: psm
+    robot_handle: Any #psm
     ftk_handle: FusionTrackAbstract
     data_saver: RecordCollectionCsvSaver
     save_every: int = 60
