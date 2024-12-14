@@ -2,27 +2,19 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict
 
-import matplotlib.pyplot as plt
 import pandas as pd
 from kincalib.Record.Record import Record
-from kincalib.Calibration.HandEyeCalibration import HandEyeBatchProcessing
 from kincalib.Record.Record import CartesianRecord, JointRecord
 from kincalib.Transforms.Rotation import Rotation3D
 from kincalib.utils.Logger import Logger
-from kincalib.Kinematics.robotics_toolbox_kin.DvrkKin import DvrkPsmKin
 from kincalib.Kinematics import convert_mat_to_frame
-
-# from surgical_robotics_challenge.kinematics.psmIK import (
-#     compute_FK,
-#     compute_IK,
-#     convert_mat_to_frame,
-# )
-# import surgical_robotics_challenge
 from kincalib.Kinematics import DvrkPsmKin_SRC
-import json
 import numpy as np
 import kincalib
 from kincalib.utils.Plots import *
+
+# To style matplotlib plots
+from kincalib.Kinematics.robotics_toolbox_kin.DvrkKin import DvrkPsmKin
 
 log = Logger(__name__).log
 
