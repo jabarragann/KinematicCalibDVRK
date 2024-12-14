@@ -2,6 +2,14 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 
+from pathlib import Path
+
+## Submitted to paper
+# root = "./results/paper_plots1/"
+# model_types = ["measured-setpoint", "actual-measured"]
+
+root = "./results/attempt_to_reproduce_20241212/"
+model_types = ["actual-measured"]
 
 def plot_offsets():
     sub_params = dict(
@@ -10,11 +18,10 @@ def plot_offsets():
     figsize = (15.94, 5.20)
     fig, axes = plt.subplots(6, 2, sharex=True, figsize=figsize)
     fig.subplots_adjust(**sub_params)
-    model_types = ["measured-setpoint", "actual-measured"]
     for idx, type in enumerate(model_types):
-        poses1 = np.load(f"results/paper_plots1/poses1_jp_{type}.npy")
-        poses2 = np.load(f"results/paper_plots1/poses2_jp_{type}.npy")
-        poses2_pred = np.load(f"results/paper_plots1/poses2_jp_pred_{type}.npy")
+        poses1 = np.load(f"{root}/poses1_jp_{type}.npy")
+        poses2 = np.load(f"{root}/poses2_jp_{type}.npy")
+        poses2_pred = np.load(f"{root}/poses2_jp_pred_{type}.npy")
 
         gt = poses2 - poses1
         pred = poses2_pred - poses1
@@ -37,7 +44,34 @@ def plot_offsets():
 
     fig.align_ylabels(axes[:, 0])
 
-    fig.savefig("results/paper_plots1/offsets_pred.png", dpi=300)
+    fig.savefig(f"{root}offsets_pred.png", dpi=300)
+    plt.show()
+
+    # Plots the joints
+    fig, axes = plt.subplots(6, 2, sharex=True, figsize=figsize)
+    for idx, type in enumerate(model_types):
+        poses1 = np.load(f"{root}/poses1_jp_{type}.npy")
+        poses2 = np.load(f"{root}/poses2_jp_{type}.npy")
+        poses2_pred = np.load(f"{root}/poses2_jp_pred_{type}.npy")
+
+        gt = poses2 - poses1
+        pred = poses2_pred - poses1
+
+        for i in range(6):
+            axes[i, idx].plot(poses1[:, i], label="measured")
+            axes[i, idx].plot(poses2[:, i], label="actual")
+            axes[i, idx].grid()
+
+            if idx == 0:
+                if i != 2:
+                    axes[i, idx].set_ylabel(f"q{i+1} (rad)")
+                else:
+                    axes[i, idx].set_ylabel(f"q{i+1} (m)")
+
+        axes[0, idx].set_title(f"NN{idx+1}: {type}")
+        axes[0, idx].legend()
+        axes[5, 0].set_xlabel("Trajectory step")
+        axes[5, 1].set_xlabel("Trajectory step")
     plt.show()
 
     # # Get last subplot params
