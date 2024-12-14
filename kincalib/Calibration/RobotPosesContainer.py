@@ -13,13 +13,14 @@ from kincalib.Record.Record import JointRecord
 from kincalib.Transforms.Rotation import Rotation3D
 from kincalib.utils.Logger import Logger
 from kincalib.utils import calculate_orientation_error, calculate_position_error
-from kincalib.Motion.IkUtils import calculate_fk
+from kincalib.Motion.IkUtils import batch_calculate_fk
 import kincalib.Record as records
 import json
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from dataclasses import dataclass
+from kincalib.Kinematics import DvrkPsmKin_SRC
 
 log = Logger(__name__).log
 
@@ -56,7 +57,8 @@ class RobotPosesContainer:
 
     @classmethod
     def calculate_actual_jp(cls, actual_cp) -> np.ndarray:
-        actual_jp = kincalib.calculate_ik(actual_cp)
+        kin_model = DvrkPsmKin_SRC("classic")
+        actual_jp = kincalib.batch_calculate_ik(actual_cp, kin_model)
         return actual_jp
 
     def convert_to_dataframe(self) -> pd.DataFrame:
@@ -195,9 +197,11 @@ class RobotPosesContainer:
         measured_jp: np.ndarray,
         actual_jp: np.ndarray,
     ) -> RobotPosesContainer:
-        setpoint_cp = calculate_fk(setpoint_jp)
-        measured_cp = calculate_fk(measured_jp)
-        actual_cp = calculate_fk(actual_jp)
+
+        kin_model = DvrkPsmKin_SRC("classic")
+        setpoint_cp = batch_calculate_fk(setpoint_jp, kin_model)
+        measured_cp = batch_calculate_fk(measured_jp, kin_model)
+        actual_cp = batch_calculate_fk(actual_jp, kin_model)
 
         cls: RobotPosesContainer
         instance = RobotPosesContainer(

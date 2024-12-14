@@ -1,2 +1,1 @@
-
-from .Motion.IkUtils import calculate_ik
+from .Motion.IkUtils import batch_calculate_ik

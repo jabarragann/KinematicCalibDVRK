@@ -1,20 +1,15 @@
 from pathlib import Path
-from typing import Dict, List
 from kincalib.Record.DataRecorder import SensorsDataReader, RealDataRecorder
-from kincalib.Calibration.HandEyeCalibration import HandEyeBatchProcessing
 from kincalib.utils.Logger import Logger
-from kincalib.Motion.DvrkKin import DvrkPsmKin
-import json
-import numpy as np
+from kincalib.Kinematics.robotics_toolbox_kin.DvrkKin import DvrkPsmKin
 
 log = Logger(__name__).log
+current_dir = Path(__file__).resolve().parent
 
 
 def fk_example():
     record_dict = RealDataRecorder.create_records()
-    file_path = "./data/experiments/repetabability_experiment_rosbag01/01-11-2023-20-24-30/record_001.csv"
-    # file_path = "./data/experiments/repetabability_experiment_rosbag01/01-11-2023-20-28-58/record_001.csv"
-    # file_path = "./data/experiments/repetabability_experiment_rosbag01/01-11-2023-20-33-24/record_001.csv"
+    file_path = current_dir / "data/raw_sensor_rosbag_09_traj3.csv"
 
     file_path = Path(file_path)
     assert file_path.exists(), "File does not exist"
@@ -27,7 +22,7 @@ def fk_example():
     psm_kin = DvrkPsmKin()
     calculated_cp = psm_kin.fkine(measured_jp)
 
-    idx = 150
+    idx = 100
     log.info("measured from robot")
     log.info(measured_cp[:, :, idx])
     log.info("calculated with python fkine model")

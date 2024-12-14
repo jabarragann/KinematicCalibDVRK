@@ -1,6 +1,6 @@
-from surgical_robotics_challenge.kinematics.psmIK import compute_FK, compute_IK, convert_mat_to_frame, round_mat, round_vec
-from surgical_robotics_challenge.utils.joint_space_trajectory_generator import JointSpaceTrajectory
 import numpy as np
+from kincalib.Kinematics.utils import  convert_mat_to_frame, round_mat, round_vec, JointSpaceTrajectory
+from kincalib.Kinematics import DvrkPsmKin_SRC
 
 
 class bcolors:
@@ -14,6 +14,7 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
+kin_model = DvrkPsmKin_SRC("classic")
 
 num_joints = 7
 joint_lims = np.zeros((num_joints, 2))
@@ -30,9 +31,9 @@ num_points = js_traj.get_num_traj_points()
 num_joints = 6
 for i in range(num_points):
     test_q = js_traj.get_traj_at_point(i)
-    T_7_0 = compute_FK(test_q, 7)
+    T_7_0 = kin_model.compute_FK(test_q, 7)
 
-    computed_q = compute_IK(convert_mat_to_frame(T_7_0))
+    computed_q = kin_model.compute_IK(convert_mat_to_frame(T_7_0))
 
     test_q = round_vec(test_q)
     T_7_0 = round_mat(T_7_0, 4, 4, 3)

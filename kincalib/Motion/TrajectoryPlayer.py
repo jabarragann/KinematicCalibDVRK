@@ -10,7 +10,7 @@ from typing import List
 
 # ros
 from sensor_msgs.msg import JointState
-from kincalib.Motion.DvrkKin import DvrkPsmKin
+from kincalib.Kinematics.robotics_toolbox_kin.DvrkKin import DvrkPsmKin
 
 # Custom
 from kincalib.Motion.RosbagUtils import RosbagUtils

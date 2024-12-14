@@ -6,8 +6,9 @@ from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
+from kincalib.Motion import batch_calculate_fk, batch_calculate_ik
+from kincalib.Kinematics import DvrkPsmKin_SRC
 from kincalib.Metrics import MarkdownTable
-from kincalib.Motion import calculate_fk, calculate_ik
 from kincalib.utils import calculate_orientation_error, calculate_position_error
 
 
@@ -164,8 +165,9 @@ class MetricsCalculator:
 
     def calculate_cartesian_error_metrics(self):
         # Only first 6 entries are joint positions
-        gt_cartesian = calculate_fk(self.input_jp[:, :6] + self.gt_offset)
-        pred_cartesian = calculate_fk(self.input_jp[:, :6] + self.pred_offset)
+        kin_model = DvrkPsmKin_SRC("classic")
+        gt_cartesian = batch_calculate_fk(self.input_jp[:, :6] + self.gt_offset, kin_model)
+        pred_cartesian = batch_calculate_fk(self.input_jp[:, :6] + self.pred_offset, kin_model)
 
         self.pos_error = calculate_position_error(gt_cartesian, pred_cartesian)
         self.ori_error = calculate_orientation_error(gt_cartesian, pred_cartesian)

@@ -18,9 +18,10 @@ from kincalib.utils import calculate_orientation_error, calculate_position_error
 import matplotlib.pyplot as plt
 import seaborn as sns
 from kincalib.Calibration import RobotPosesContainer
-from kincalib.Motion.IkUtils import calculate_fk
+from kincalib.Motion.IkUtils import batch_calculate_fk
 import numpy as np
 from omegaconf import OmegaConf
+from kincalib.Kinematics import DvrkPsmKin_SRC
 
 # Structured config files for the training script
 from train_test_simple_net_confs.structured_confs import ExperimentConfig
@@ -205,7 +206,8 @@ class NetworkNoiseGenerator:
         poses2_jp_approximate, offset = self.corrupt_jp_batch(
             poses1_jp, prev_measured, cfg
         )
-        poses2_cp_approximate = calculate_fk(poses2_jp_approximate)
+        kin_model = DvrkPsmKin_SRC("classic") 
+        poses2_cp_approximate = batch_calculate_fk(poses2_jp_approximate, kin_model)
 
         return poses2_cp_approximate, poses2_jp_approximate
 
@@ -312,6 +314,8 @@ def reduce_pose_error_with_nn(model_path, test_data_name, output_path):
         np.save(
             output_path / f"poses2_jp_pred_{dataset_type}.npy", poses2_jp_approximate
         )
+        np.save(output_path / f"poses1_cp_{dataset_type}.npy", poses1_cp)
+        np.save(output_path / f"poses2_cp_{dataset_type}.npy", poses2_cp)
 
 
 if __name__ == "__main__":

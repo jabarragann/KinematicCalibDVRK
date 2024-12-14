@@ -9,16 +9,20 @@ from kincalib.Calibration.HandEyeCalibration import HandEyeBatchProcessing
 from kincalib.Record.Record import CartesianRecord, JointRecord
 from kincalib.Transforms.Rotation import Rotation3D
 from kincalib.utils.Logger import Logger
-from kincalib.Motion.DvrkKin import DvrkPsmKin
-from surgical_robotics_challenge.kinematics.psmIK import (
-    compute_FK,
-    compute_IK,
-    convert_mat_to_frame,
-)
-import surgical_robotics_challenge
+from kincalib.Kinematics.robotics_toolbox_kin.DvrkKin import DvrkPsmKin
+from kincalib.Kinematics import convert_mat_to_frame
+
+# from surgical_robotics_challenge.kinematics.psmIK import (
+#     compute_FK,
+#     compute_IK,
+#     convert_mat_to_frame,
+# )
+# import surgical_robotics_challenge
+from kincalib.Kinematics import DvrkPsmKin_SRC
 import json
 import numpy as np
 import kincalib
+from kincalib.utils.Plots import *
 
 log = Logger(__name__).log
 
@@ -68,41 +72,21 @@ class DataParser:
         return pose_arr
 
 
-def plot_joints(data_dict: Dict[str, np.ndarray]):
-    cal_jp = kincalib.calculate_ik(data_dict["measured_cp"])
+def plot_joints(data_dict: Dict[str, np.ndarray], kin_model: DvrkPsmKin_SRC):
+    cal_jp = kincalib.batch_calculate_ik(data_dict["measured_cp"], kin_model)
 
-    sub_params = dict(
-        top=0.94,
-        bottom=0.08,
-        left=0.06,
-        right=0.95,
-        hspace=0.93,
-        wspace=0.20,
-    )
-    figsize = (9.28, 6.01)
-
-    fig, axes = plt.subplots(6, 2, figsize=figsize, sharex=True)
-    fig.subplots_adjust(**sub_params)
-
-    for i in range(6):
-        axes[i, 0].plot(data_dict["measured_js"][:, i], label="measured_js")
-        axes[i, 0].plot(cal_jp[:, i], label="IK(measured_cp)")
-        axes[i, 0].set_title(f"Joint {i+1}")
-
-        axes[i, 1].plot(cal_jp[:, i] - data_dict["measured_js"][:, i], label="IK")
-        axes[i, 1].set_title(f"measured_js - IK(measured_cp) for joint {i+1}")
-
-    axes[0, 0].legend()
-    plt.show()
+    create_joint_plot_for_IK_FK_tests(data_dict["measured_js"], cal_jp)
 
 
-def demo(data_dict: Dict[str, np.ndarray]):
+def print_some_calculations(
+    data_dict: Dict[str, np.ndarray], kin_model: DvrkPsmKin_SRC
+):
     measured_jp = data_dict["measured_js"]
     measured_cp = data_dict["measured_cp"]
 
     # Experiment 1
     idx = 0
-    calculated_cp2 = compute_FK(measured_jp[idx], 7)
+    calculated_cp2 = kin_model.compute_FK(measured_jp[idx], 7)
 
     log.info(f"Forward kinematics at index {idx}")
     log.info(f"measured_cp from SRC FK\n{calculated_cp2}")
@@ -112,7 +96,7 @@ def demo(data_dict: Dict[str, np.ndarray]):
     )
     log.info(f"\n\n")
 
-    calculated_jp2 = compute_IK(convert_mat_to_frame(measured_cp[:, :, idx]))
+    calculated_jp2 = kin_model.compute_IK(convert_mat_to_frame(measured_cp[:, :, idx]))
     calculated_jp2 = np.array(calculated_jp2)
 
     log.info(f"Inverse kinematics at idx {idx}")
@@ -125,10 +109,15 @@ def demo(data_dict: Dict[str, np.ndarray]):
 
     # Experiment 2
     log.info(f"Test that FK and IK are inverse functions of each other")
-    calculated_cp2 = compute_FK(measured_jp[idx], 7)
-    calculated_jp2 = compute_IK(convert_mat_to_frame(calculated_cp2))
+    calculated_cp2 = kin_model.compute_FK(measured_jp[idx], 7)
+    calculated_jp2 = kin_model.compute_IK(convert_mat_to_frame(calculated_cp2))
     log.info(calculated_jp2 - measured_jp[idx])
     log.info(f"\n\n")
+
+
+from pathlib import Path
+
+current_dir = Path(__file__).resolve().parent
 
 
 def ik_example():
@@ -136,17 +125,20 @@ def ik_example():
     cp_rec = CartesianRecord("measured_cp", "measured_")
     record_dict = dict(measured_js=jp_rec, measured_cp=cp_rec)
 
-    # file_path = "/home/juan1995/temp/dvrk_data_fk/classic_tool_fixed.csv"
-    file_path = "/home/juan1995/temp/dvrk_data_fk/Si_tool_fixed.csv"
+    # kin_model = DvrkPsmKin_SRC("classic")
+    # file_path = current_dir/"data/classic_tool_fixed.csv"
+
+    kin_model = DvrkPsmKin_SRC("SI")
+    file_path = current_dir / "data/Si_tool_fixed.csv"
 
     file_path = Path(file_path)
-    assert file_path.exists(), "File does not exist"
+    assert file_path.exists(), f"File ({file_path}) does not exist"
 
     log.info(f"Analyzing experiment {file_path.parent.name}")
     data_dict = DataParser(file_path, record_dict).data_dict
 
-    demo(data_dict)
-    plot_joints(data_dict)
+    print_some_calculations(data_dict, kin_model)
+    plot_joints(data_dict, kin_model)
 
 
 if __name__ == "__main__":
