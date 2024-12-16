@@ -1,6 +1,6 @@
 defaults:
   - base_config
-  - path_config/juanrog_dataset4
+  - path_config: juanubuntu_dataset4.yaml # dataset used in paper submission.
   - override hydra/job_logging: none
   - override hydra/hydra_logging: none
   - _self_
