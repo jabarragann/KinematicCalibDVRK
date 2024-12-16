@@ -37,15 +37,13 @@ Change the main config file in `scripts/learning_scripts/train_test_simple_net_c
 ```yaml
 defaults:
   - base_config
-  - path_config/NAME_OF_NEW_PATH_CONFIG_FILE
+  - path_config=juanubuntu_dataset4.yaml 
 ```
 
-### Scripts
+alternatively you can change the path_config in the command line when running the script.
 
-
-Training script
 ```bash
-python scripts/learning_scripts/train_test_simple_net.py
+python scripts/learning_scripts/train_test_simple_net.py path_config=juanubuntu_dataset4.yaml 
 ```
 
 

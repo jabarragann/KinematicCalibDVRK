@@ -70,3 +70,38 @@ python scripts/learning_scripts/test_network_on_trajectory.py \
 --test_data_name raw_sensor_rosbag_09_traj3.csv \
 --model_path outputs_hydra/train_test_simple_net_20231201_124659 \
 --output_path results/paper_plots1
+
+
+#---------------------------------------------------------------
+# Analysis: 1 year after paper submission 
+#---------------------------------------------------------------
+
+## RUN ON JUANUBUNTU
+#-------------------
+
+## Training
+python scripts/learning_scripts/train_test_simple_net.py path_config=juanubuntu_dataset4.yaml
+
+## Only Testing
+python scripts/learning_scripts/train_test_simple_net.py path_config=juanubuntu_dataset4.yaml actions.train=False output_path=outputs_hydra/train_test_simple_net_20241211_182346/
+
+## Test on raw tarjectory
+python scripts/learning_scripts/test_network_on_trajectory.py --test_data_name raw_sensor_rosbag_09_traj3.csv --model_path outputs_hydra/train_test_simple_net_20241211_182346/ --output_path results/attempt_to_reproduce_20241212
+
+## see results of prediction in raw trajectory
+python scripts/paper_plots/plot_offset_predictions.py
+
+## RUN ON JUAN ROG
+#-----------------
+
+## Training
+python scripts/learning_scripts/train_test_simple_net.py path_config=juanrog_dataset4.yaml
+
+## Only Testing
+python scripts/learning_scripts/train_test_simple_net.py path_config=juanrog_dataset4.yaml actions.train=False output_path=outputs_hydra/train_test_simple_net_20241216_115750/
+
+## Test on raw tarjectory
+python scripts/learning_scripts/test_network_on_trajectory.py --test_data_name raw_sensor_rosbag_09_traj3.csv --model_path outputs_hydra/train_test_simple_net_20241216_115750/ --output_path results/attempt_to_reproduce_20241212
+
+## see results of prediction in raw trajectory
+python scripts/paper_plots/plot_offset_predictions.py
