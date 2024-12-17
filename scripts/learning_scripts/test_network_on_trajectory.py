@@ -171,7 +171,7 @@ class NetworkNoiseGenerator:
         output_normalizer = Normalizer.from_json(output_normalizer_json)
 
         model = BestMLP2(input_features)
-        model.load_state_dict(torch.load(weights_path))
+        model.load_state_dict(torch.load(weights_path, weights_only=True))
         return cls(model, input_normalizer, output_normalizer)
 
     def corrupt_jp_batch(

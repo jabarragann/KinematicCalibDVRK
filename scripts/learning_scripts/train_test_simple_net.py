@@ -175,7 +175,7 @@ def show_training_plots(trainer: Trainer):
 
 def load_best_weights(model: BestMLP2, cfg: ExperimentConfig):
     log.info(f"Loading weights from {cfg.output_path}")
-    model.load_state_dict(torch.load(Path(cfg.output_path) / "final_weights.pth"))
+    model.load_state_dict(torch.load(Path(cfg.output_path) / "final_weights.pth", weights_only=True))
     return model
 
 
