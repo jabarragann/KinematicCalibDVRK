@@ -6,10 +6,10 @@ from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
-from kincalib.Motion import batch_calculate_fk, batch_calculate_ik
+from kincalib.Motion.IkUtils import batch_calculate_fk 
 from kincalib.Kinematics import DvrkPsmKin_SRC
 from kincalib.Metrics import MarkdownTable
-from kincalib.utils import calculate_orientation_error, calculate_position_error
+from kincalib.utils.ErrorUtils import calculate_orientation_error, calculate_position_error
 
 
 @dataclass

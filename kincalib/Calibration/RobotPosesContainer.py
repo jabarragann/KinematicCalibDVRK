@@ -4,6 +4,8 @@ from typing import Dict, List
 
 import pandas as pd
 import kincalib
+import kincalib.Motion
+import kincalib.Motion.IkUtils
 from kincalib.Record.DataRecorder import (
     RobotPosesDataReader,
     SensorsDataReader,
@@ -12,7 +14,7 @@ from kincalib.Record.DataRecorder import (
 from kincalib.Record.Record import JointRecord
 from kincalib.Transforms.Rotation import Rotation3D
 from kincalib.utils.Logger import Logger
-from kincalib.utils import calculate_orientation_error, calculate_position_error
+from kincalib.utils.ErrorUtils import calculate_orientation_error, calculate_position_error
 from kincalib.Motion.IkUtils import batch_calculate_fk
 import kincalib.Record as records
 import json
@@ -58,7 +60,7 @@ class RobotPosesContainer:
     @classmethod
     def calculate_actual_jp(cls, actual_cp) -> np.ndarray:
         kin_model = DvrkPsmKin_SRC("classic")
-        actual_jp = kincalib.batch_calculate_ik(actual_cp, kin_model)
+        actual_jp = kincalib.Motion.IkUtils.batch_calculate_ik(actual_cp, kin_model)
         return actual_jp
 
     def convert_to_dataframe(self) -> pd.DataFrame:
