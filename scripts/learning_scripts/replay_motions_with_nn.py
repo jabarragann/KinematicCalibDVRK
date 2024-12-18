@@ -15,7 +15,7 @@ from kincalib.utils.Logger import Logger
 from omegaconf import OmegaConf
 from test_network_on_trajectory import NetworkNoiseGenerator, load_robot_poses
 from kincalib.Motion.IkUtils import batch_calculate_fk
-from kincalib.utils import calculate_orientation_error, calculate_position_error
+from kincalib.utils.ErrorUtils import calculate_orientation_error, calculate_position_error
 import seaborn as sns
 import matplotlib.pyplot as plt
 import pandas as pd
