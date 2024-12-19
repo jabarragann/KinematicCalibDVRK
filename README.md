@@ -1,6 +1,6 @@
 # Improving the realism of robotic surgery simulation through injection of learning-based estimated errors
 
-## Setup environment - Last modified on August 03, 2024
+## Setup environment - Last modified on December 19, 2024
 
 
 * This code was tested with an anaconda virtual environment.
